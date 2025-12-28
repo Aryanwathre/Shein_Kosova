@@ -1,17 +1,17 @@
-class Category {
-  final int id;
+class CategoryModel {
+  final String id;
   final String name;
   final String? categoryImage;
 
-  Category({
+  CategoryModel({
     required this.id,
     required this.name,
     this.categoryImage,
   });
 
-  factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      id: json['id'] ?? 0,
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       categoryImage: json['categoryImage'],
     );
@@ -22,6 +22,14 @@ class Category {
     "name": name,
     "categoryImage": categoryImage,
   };
+
+  factory CategoryModel.object(){
+    return CategoryModel(
+      id:'',
+      name:"",
+      categoryImage: '',
+    );
+  }
 }
 
 class PageableCategory {
@@ -49,7 +57,7 @@ class PageableCategory {
 
 /// Wrapper model for paginated response
 class CategoryResponse {
-  final List<Category> content;
+  final List<CategoryModel> content;
   final PageableCategory? pageable;
   final int totalPages;
   final int totalElements;
@@ -71,8 +79,8 @@ class CategoryResponse {
 
   factory CategoryResponse.fromJson(Map<String, dynamic> json) {
     return CategoryResponse(
-      content: (json['content'] as List<dynamic>)
-          .map((item) => Category.fromJson(item))
+      content: (json['content'] as List<dynamic>? ?? [])
+          .map((item) => CategoryModel.fromJson(item))
           .toList(),
       pageable: json['pageable'] != null
           ? PageableCategory.fromJson(json['pageable'])

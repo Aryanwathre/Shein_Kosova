@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../models/ProductModel.dart';
 import '../services/api_service.dart';
@@ -16,6 +14,8 @@ class ProductProvider extends ChangeNotifier {
   ProductListState _listState = ProductListState.initial;
   String? _listErrorMessage;
   String _selectedSort = "Relevance";
+  bool isLoading = true;
+
 
   List<ProductModel> get products => _filteredProducts;
   List<ProductModel> get categoryProducts => _categoryProducts;
@@ -45,19 +45,20 @@ class ProductProvider extends ChangeNotifier {
     _setListState(ProductListState.loading);
     try {
       final response = await _api.productsApi.getProducts();
-      if (response is String && response.isNotEmpty) {
-        final decoded = jsonDecode(response);
-        final List<dynamic> productList =
-            decoded is List ? decoded : (decoded['data'] ?? []);
+      
+      if (response.success && response.data != null) {
+        final List<dynamic> productList = response.data is List 
+            ? response.data 
+            : (response.data['data'] ?? []);
+            
         _allProducts = productList
             .map<ProductModel>((json) => ProductModel.fromJson(json))
             .toList();
         _filteredProducts = List.from(_allProducts);
         _setListState(ProductListState.loaded);
       } else {
-        _setListError('No products found');
+        _setListError(response.error ?? 'No products found');
       }
-
     } catch (e) {
       _setListError('A network error occurred: ${e.toString()}');
     }
@@ -68,14 +69,61 @@ class ProductProvider extends ChangeNotifier {
   /// Set the product for the details page and initialize its state
   void setProduct(ProductModel product) {
     _product = product;
-    // Reset state whenever a new product is set
+
     _selectedImageIndex = 0;
     _quantity = 1;
-    _selectedColor = product.colors!.isNotEmpty ? product.colors!.first : null;
+    _selectedColor = product.colors;
     _selectedSize = product.sizes!.isNotEmpty ? product.sizes!.first : null;
     _isWishlisted = false; // Fetch real wishlist status from API if needed
     notifyListeners();
   }
+
+  Future<void> getProductByID(int productId) async {
+    _setListState(ProductListState.loading);
+    _product = ProductModel.object();
+    notifyListeners();
+    try{
+      final responseBody = await _api.productsApi.getProductById(productId: productId.toString());
+      if(responseBody.success && responseBody.data != null){
+        final products = ProductModel.fromJson(responseBody.data!);
+        _product = products;
+        _setListState(ProductListState.loaded);
+      } else {
+        _setListError(responseBody.error ?? 'Product not found');
+      }
+    }catch (e) {
+      _setListError('Network error: ${e.toString()}');
+      debugPrint('⚠️ Exception: $e');
+    }
+  }
+
+  Future<bool> submitReview({
+    required String productId,
+    required double rating,
+    required String comment,
+  }) async {
+    try {
+      final response = await _api.reviewsApi.addReview(
+        productId: productId,
+        rating: rating,
+        comment: comment,
+      );
+
+      if (response.success) {
+        await getProductByID(int.parse(productId));
+        notifyListeners();
+        return true;
+      } else {
+        _setListError("Failed to add review: ${response.error}");
+        return false;
+      }
+    } catch (e) {
+      _setListError("Error submitting review: $e");
+      return false;
+    }
+  }
+
+
 
   // --- UI and Filter/Sort Methods ---
 
@@ -108,13 +156,12 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final responseBody = await _api.productsApi.getProductByCategory('$categoryID');
+      final response = await _api.productsApi.getProductByCategory('$categoryID');
 
-      if (responseBody is String && responseBody.isNotEmpty) {
-        final decoded = jsonDecode(responseBody);
-
-        final List<dynamic> productList =
-        decoded is List ? decoded : (decoded['data'] ?? []);
+      if (response.success && response.data != null) {
+        final List<dynamic> productList = response.data is List 
+            ? response.data 
+            : (response.data['data'] ?? []);
 
         final products = productList
             .map<ProductModel>((json) => ProductModel.fromJson(json))
@@ -124,14 +171,14 @@ class ProductProvider extends ChangeNotifier {
         _categoryProducts = products;
         _setListState(ProductListState.loaded);
 
-        print('✅ Loaded ${products.length} products for category $categoryID (removed product: $currentProductId)');
+        debugPrint('✅ Loaded ${products.length} products for category $categoryID (removed product: $currentProductId)');
       } else {
-        _setListError('No products found');
-        print('⚠️ Empty or invalid response for category $categoryID');
+        _setListError(response.error ?? 'No products found');
+        debugPrint('⚠️ Error response for category $categoryID: ${response.error}');
       }
     } catch (e) {
       _setListError('Network error: ${e.toString()}');
-      print('⚠️ Exception: $e');
+      debugPrint('⚠️ Exception: $e');
     }
   }
 
@@ -151,6 +198,34 @@ class ProductProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> fetchVariantById(int variantId) async {
+    _setListState(ProductListState.loading);
+    notifyListeners();
+
+    try {
+      final response = await _api.productsApi.getProductById(productId: '$variantId');
+      if (response.success && response.data != null) {
+        _product = ProductModel.fromJson(response.data!);
+      }
+    } catch (e) {
+      debugPrint("Error fetching variant: $e");
+    } finally {
+      _setListState(ProductListState.loaded);
+      notifyListeners();
+    }
+  }
+
+  void resetDetails() {
+    _product = null;
+    _selectedSize = null;
+    _selectedImageIndex = 0;
+    _categoryProducts = [];
+    isLoading = true;
+
+    notifyListeners();
+  }
+
 
   void selectColor(String color) {
     _selectedColor = color;

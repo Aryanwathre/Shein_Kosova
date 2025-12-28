@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:shein_kosova/models/ReviewModel.dart';
 
 class RatingsReviewsWidget extends StatefulWidget {
   final double averageRating;
-  final List<Map<String, dynamic>> reviews;
+  final List<ReviewModel>? reviews;
+  VoidCallback voidCallback;
 
-  const RatingsReviewsWidget({
+   RatingsReviewsWidget({
     super.key,
     required this.averageRating,
     required this.reviews,
+    required this.voidCallback
   });
 
   @override
@@ -62,7 +65,7 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "(${widget.reviews.length} reviews)",
+                        "(${widget.reviews!.length} reviews)",
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -88,7 +91,7 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
               secondChild: Column(
                 children: [
                   const Divider(height: 20),
-                  ...widget.reviews.map((review) {
+                  ...widget.reviews!.map((review) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
@@ -98,7 +101,7 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                             radius: 18,
                             backgroundColor: Colors.blueGrey[100],
                             child: Text(
-                              review['user'][0].toUpperCase(),
+                              review.reviewerName[0].toUpperCase(),
                               style: const TextStyle(
                                   color: Colors.black, fontSize: 16),
                             ),
@@ -109,15 +112,15 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  review['user'],
+                                  review.reviewerName,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 2),
-                                _buildStarRow(review['rating']),
+                                _buildStarRow(review.rating),
                                 const SizedBox(height: 4),
                                 Text(
-                                  review['comment'],
+                                  review.comment,
                                   style: const TextStyle(
                                       color: Colors.black87, fontSize: 14),
                                 ),
@@ -131,6 +134,14 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                 ],
               ),
             ),
+
+            GestureDetector(
+              onTap: widget.voidCallback,
+              child: Text(
+                  "Add Review",
+                style: const TextStyle(color: Colors.grey),
+              ),
+            )
           ],
         ),
       ),

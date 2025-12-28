@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class BiteSearchBar extends StatelessWidget {
-  final Color iconColor; // 👈 accept color from parent
+  final Color iconColor;
 
   const BiteSearchBar({super.key, required this.iconColor});
 
@@ -10,58 +11,63 @@ class BiteSearchBar extends StatelessWidget {
     final height = MediaQuery.of(context).size.height * 0.04;
     final width = MediaQuery.of(context).size.width * 0.9;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white, width: 2),
-      ),
-      child: Stack(
-        alignment: Alignment.centerRight,
-        children: [
-          ClipPath(
-            clipper: BiteClipper(),
-            child: Container(
-              height: height,
-              width: width,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: const Row(
-                children: [
-                  Text(
-                    'Search',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
+    return GestureDetector(
+      onTap: (){
+        context.push('/search');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: Stack(
+          alignment: Alignment.centerRight,
+          children: [
+            ClipPath(
+              clipper: BiteClipper(),
+              child: Container(
+                height: height,
+                width: width,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  children: [
+                    Text(
+                      'Search',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // 👇 “Bite” area with dynamic icon color
-          Positioned(
-            right: MediaQuery.of(context).size.width * 0.01,
-            top: 0,
-            bottom: 0,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.transparent,
-              ),
-              child: Icon(
-                Icons.search,
-                color: iconColor, // 👈 dynamic color
-                size: 22,
+            // 👇 “Bite” area with dynamic icon color
+            Positioned(
+              right: MediaQuery.of(context).size.width * 0.01,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.transparent,
+                ),
+                child: Icon(
+                  Icons.search,
+                  color: iconColor, // 👈 dynamic color
+                  size: 22,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

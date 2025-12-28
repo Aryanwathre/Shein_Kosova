@@ -22,8 +22,8 @@ class OrdersProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _setError(String message) {
-    _errorMessage = message;
+  void _setError(String error) {
+    _errorMessage = error;
     _setState(CheckoutState.error);
   }
 
@@ -31,7 +31,9 @@ class OrdersProvider with ChangeNotifier {
     _errorMessage = null;
   }
 
-  /// ✅ Create a new order
+  /// --------------------------------------------------
+  ///  CREATE ORDER
+  /// --------------------------------------------------
   Future<void> createOrder({
     required String addressId,
     required String paymentMethod,
@@ -54,18 +56,22 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  /// ✅ Fetch all orders
+  /// --------------------------------------------------
+  ///  GET ALL ORDERS
+  /// --------------------------------------------------
   Future<void> getAllOrders() async {
     _setState(CheckoutState.loading);
 
     try {
       final response = await _ordersApi.getOrders();
-      print("🟢 API Response: ${response.data?.first.orderId}");
+
+      print("🟢 RAW API RESPONSE: ${response.data}");
 
       if (response.success && response.data != null) {
+        _orders = response.data!;  // 👈 Directly assign parsed List<OrderModel>
 
-        _orders = List<OrderModel>.of(response.data!);
-        print("✅ Parsed Orders: ${_orders}");
+        print("✅ Parsed Orders: $_orders");
+
         _clearError();
         _setState(CheckoutState.success);
       } else {
@@ -77,8 +83,9 @@ class OrdersProvider with ChangeNotifier {
   }
 
 
-
-  /// ✅ Get order status by ID
+  /// --------------------------------------------------
+  ///  GET ORDER STATUS
+  /// --------------------------------------------------
   Future<void> getOrderStatus(String orderId) async {
     _setState(CheckoutState.loading);
 
@@ -97,7 +104,9 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  /// ✅ Reset provider state
+  /// --------------------------------------------------
+  ///  RESET PROVIDER
+  /// --------------------------------------------------
   void reset() {
     _orders = [];
     _orderStatus = null;

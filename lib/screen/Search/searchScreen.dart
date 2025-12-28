@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shein_kosova/models/ProductModel.dart';
-import 'package:shein_kosova/widgets/ProductCard.dart';
-
-// Make sure these paths are correct for your project structure
+import 'package:shein_kosova/screen/Search/searchesultScreen.dart';
 import '../../provider/search_provider.dart';
+import '../../widgets/SearchBar.dart';
 import '../ProductDetails/productDetails.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -15,111 +13,97 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  late SearchProvider searchProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    searchProvider = Provider.of<SearchProvider>(context, listen: false);
+  }
 
   @override
   void dispose() {
-    // It's good practice to clear the search and dispose the controller
-    // when leaving the screen to free up resources.
-    Provider.of<SearchProvider>(context, listen: false).clearSearch();
-    _searchController.dispose();
+    final provider = Provider.of<SearchProvider>(context, listen: false);
+_searchController.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.clearSearchResults();
+    });
+
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  _buildSearchBar(),
-      body: Column(
-        children: [
-
-          Expanded(child: _buildSearchResults()),
-        ],
-      ),
-    );
-  }
-
-  /// Builds the search bar with a clear button.
-  PreferredSize _buildSearchBar() {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(120),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 80, 8, 8),
-        child: Consumer<SearchProvider>(
-          builder: (context, searchProvider, child) {
-            return TextField(
-              controller: _searchController,
-              autofocus: true, // Automatically focus the search bar
-              onChanged: (query) => searchProvider.search(query),
-              decoration: InputDecoration(
-                hintText: "Search for products...",
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    searchProvider.clearSearch();
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            );
-          },
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(100),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: searchbarTextField(context, _searchController),
+          ),
         ),
       ),
+
+      body: Consumer<SearchProvider>(
+        builder: (context, provider, child) {
+
+      // 👉 1. If query is empty → show nothing
+      if (provider.query == null || provider.query!.isEmpty) {
+        return const SizedBox();
+      }
+
+      // 👉 2. Show loader
+      if (provider.state == SearchState.loading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      // 👉 3. Error from backend (optional)
+      if (provider.state == SearchState.error) {
+        return const SizedBox(); // Show nothing
+      }
+
+      // 👉 4. No products found → show nothing
+      if (provider.searchResults.isEmpty) {
+        return const SizedBox();
+      }
+
+      // 👉 5. Show products list
+      return ListView.builder(
+        itemCount: provider.searchResults.length,
+        itemBuilder: (context, index) {
+          final product = provider.searchResults[index];
+          return ListTile(
+            leading: Image.network(
+              product.mainImageUrl ?? '',
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+            ),
+            title: Text(
+              product.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text("\$${product.price}"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailsScreen(product: product),
+                ),
+              );
+            },
+          );
+        },
+      );
+    },
+    ),
+
     );
   }
-
-  /// Builds the search results section based on the provider's state.
-  Widget _buildSearchResults() {
-    return Consumer<SearchProvider>(
-      builder: (context, provider, child) {
-        switch (provider.state) {
-          case SearchState.initial:
-            return const Center(
-              child: Text("Start typing to search for products."),
-            );
-          case SearchState.loading:
-            return const Center(child: CircularProgressIndicator());
-          case SearchState.error:
-            return Center(
-              child: Text(provider.errorMessage ?? 'An error occurred.'),
-            );
-          case SearchState.loaded:
-            if (provider.searchResults.isEmpty) {
-              return const Center(child: Text("No products found."));
-            }
-            // Display the grid of search results
-            return GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                // crossAxisSpacing: 8,
-                // mainAxisSpacing: 8,
-                childAspectRatio: 0.6,
-              ),
-              itemCount: provider.searchResults.length,
-              itemBuilder: (context, index) {
-                final ProductModel product = provider.searchResults[index];
-                return ProductCard(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProductDetailsScreen(product: product),
-                        ),
-                      );
-                    },
-                    context: context,
-                    product: product
-                );
-              },
-            );
-        }
-      },
-    );
-  }
-
 }
+

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/WishlistItemModel.dart';
+import '../models/wishlist_item_model.dart';
 import '../services/api_service.dart';
 
 enum WishlistState { initial, loading, loaded, error, updating }
@@ -10,11 +10,9 @@ class WishlistProvider extends ChangeNotifier {
   List<WishlistItemModel> _wishlistItems = [];
   WishlistState _state = WishlistState.initial;
   String? _errorMessage;
-  int _wishlistItemID = 0;
 
   // Getters
   List<WishlistItemModel> get wishlistItems => _wishlistItems;
-  int get WishlistItemID => _wishlistItemID;
   WishlistState get state => _state;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _state == WishlistState.loading;
@@ -23,8 +21,8 @@ class WishlistProvider extends ChangeNotifier {
 
   /// Check if a product (by productId) is in the wishlist
   bool isProductInWishlist(int productId) {
-    print("Checking if product $productId is in wishlist");
-    print("Current wishlist items: ${_wishlistItems.map((item) => item.productId).toList()}");
+    debugPrint("Checking if product $productId is in wishlist");
+    debugPrint("Current wishlist items: ${_wishlistItems.map((item) => item.productId).toList()}");
     return _wishlistItems.any((item) => item.productId == productId);
   }
 
@@ -37,32 +35,34 @@ class WishlistProvider extends ChangeNotifier {
       final response = await _api.wishlistApi.getWishlist();
 
       if (response.success && response.data != null) {
-        final data = response.data;
+        final raw = response.data;
 
-        // Log the raw API response
-        debugPrint("Wishlist raw response: $data");
+        debugPrint("Wishlist raw response: $raw");
 
-        // ✅ Handle the correct response format
-        if (data is Map<String, dynamic>) {
-          final items = data!['items'] as List<dynamic>?;
+        if (raw is Map<String, dynamic>) {
+          final items = raw["items"] as List<dynamic>? ?? [];
 
-          _wishlistItems = List<WishlistItemModel>.from(
-            items?.map((item) => WishlistItemModel.fromJson(item)) ?? [],
-          );
+          _wishlistItems = items.map((item) {
+            return WishlistItemModel.fromJson({
+              ...item,
+              // Ensure correct types
+              "wishlistItemId": int.tryParse(item["wishlistItemId"].toString()) ?? 0,
+              "productId": int.tryParse(item["productId"].toString()) ?? 0,
+            });
+          }).toList();
 
           debugPrint("Parsed wishlist items: ${_wishlistItems.length}");
           _setState(WishlistState.loaded);
         } else {
-          _setError('Invalid API response format');
+          _setError("Invalid wishlist format from API");
         }
       } else {
-        _setError(response.error ?? 'Failed to load wishlist');
+        _setError(response.error ?? "Failed to load wishlist");
       }
     } catch (e) {
-      _setError('Network error: ${e.toString()}');
+      _setError("Network error: ${e.toString()}");
     }
   }
-
 
   /// Add a product to the wishlist
   Future<void> addToWishlist(int productId) async {

@@ -35,19 +35,9 @@ class AuthProvider extends ChangeNotifier {
         _setState(AuthState.authenticated);
       } else {
         _setState(AuthState.unauthenticated);
-
-        // Navigate to login if not authenticated
-        Future.microtask(() {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>LoginScreen(),));
-        });
       }
     } catch (e) {
       _setState(AuthState.unauthenticated);
-
-      // Also navigate to login on error
-      Future.microtask(() {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>LoginScreen(),));
-      });
     }
   }
 
@@ -102,7 +92,9 @@ class AuthProvider extends ChangeNotifier {
         _currentUser = response.data;
         _setState(AuthState.authenticated);
         _clearError();
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>LandingPage(selectedIndex: 0),));
+        if (context.mounted) {
+           Navigator.pop(context, true); // Pop if it was a modal register
+        }
         return true;
       } else {
         _setError(response.error ?? 'Registration failed');
@@ -114,11 +106,25 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> ensureValidToken() async {
+    if (!await TokenManager.isTokenValid()) {
+      return await TokenManager.forceRefreshToken();
+    }
+    return true;
+  }
+
+
   // Logout
   Future<void> logout(BuildContext context) async {
     try {
       await _apiManager.logout();
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>LoginScreen(),));
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LandingPage(selectedIndex: 0)),
+          (route) => false,
+        );
+      }
 
     } catch (e) {
       debugPrint('Logout error: $e');

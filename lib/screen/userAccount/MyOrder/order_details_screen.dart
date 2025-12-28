@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../models/order_model.dart';
+import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:intl/intl.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -9,193 +11,246 @@ class OrderDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Order #${order.orderId}")),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text("Order Details"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildOrderItems(order),
-            const SizedBox(height: 20),
-            _buildOrderStatus(order.status),
-            const SizedBox(height: 20),
-            _buildDeliveryAddress(),
-            const Divider(height: 32),
-            _buildPriceDetails(order.totalAmount),
-            const Divider(height: 32),
-            _buildOrderInfo(order),
-            const SizedBox(height: 20),
-            _buildCancelButton(context, order),
+            // Order Summary Header
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Order ID: #${order.orderId}",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Ordered on ${DateFormat('dd MMM yyyy').format(order.createdAt)}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatusChip(order.status),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Shipping Address
+            _buildSection(
+              title: "Shipping Address",
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    order.address.receiverName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(order.address.addressLine1),
+                  if (order.address.addressLine2.isNotEmpty)
+                    Text(order.address.addressLine2),
+                  Text("${order.address.city}, ${order.address.state} ${order.address.postalCode}"),
+                  Text(order.address.country),
+                  const SizedBox(height: 4),
+                  Text("Phone: ${order.address.contactNumber}"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Payment Info
+            _buildSection(
+              title: "Payment Information",
+              content: Row(
+                children: [
+                  Icon(Icons.payment, size: 20, color: Colors.grey[700]),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.paymentStatus.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        "Status: ${order.paymentStatus}",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Order Items
+            _buildSection(
+              title: "Order Items",
+              content: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: order.items.length,
+                separatorBuilder: (_, __) => const Divider(height: 24),
+                itemBuilder: (context, index) {
+                  final item = order.items[index];
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(Icons.image, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.productName,
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Qty: ${item.quantity}",
+                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            ),
+                            const SizedBox(height: 4),
+                            styledPrice(item.price, fontSize: 15),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Order Summary / Total
+            _buildSection(
+              title: "Order Summary",
+              content: Column(
+                children: [
+                  _priceRow("Items Total:", order.totalAmount),
+                  _priceRow("Shipping:", 0.00),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Order Total:",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      styledPrice(order.totalAmount, fontSize: 18, color: Colors.black),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Actions
+            if (order.status.toUpperCase() == "PENDING" || order.status.toUpperCase() == "PROCESSING")
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      // Handle cancellation
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                    ),
+                    child: const Text("Cancel Order"),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  // --- Ordered Items ---
-  Widget _buildOrderItems(OrderModel order) {
-    if (order.items.isEmpty) {
-      return const Center(child: Text("No items found in this order"));
+  Widget _buildSection({required String title, required Widget content}) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 12),
+          content,
+        ],
+      ),
+    );
+  }
+
+  Widget _priceRow(String label, double price) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[700])),
+          Text("€${price.toStringAsFixed(2)}"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    Color color;
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
+        color = Colors.green;
+        break;
+      case 'CANCELLED':
+        color = Colors.red;
+        break;
+      case 'SHIPPED':
+        color = Colors.blue;
+        break;
+      default:
+        color = Colors.orange;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Ordered Items",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Column(
-            children: order.items.map((item) {
-              return ListTile(
-                // leading: ClipRRect(
-                //   borderRadius: BorderRadius.circular(8),
-                //   child: Image.network(
-                //     item.image,
-                //     width: 60,
-                //     height: 60,
-                //     fit: BoxFit.cover,
-                //     errorBuilder: (_, __, ___) =>
-                //     const Icon(Icons.image_not_supported),
-                //   ),
-                // ),
-                title: Text(item.productName,
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text("Qty: ${item.quantity}"),
-                trailing: Text("€${item.price * item.quantity}"),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // --- Order Status Stepper ---
-  Widget _buildOrderStatus(String status) {
-    final statusSteps = ["Placed", "Processing", "Shipped", "Delivered"];
-    int currentStep = statusSteps.indexOf(status);
-    if (currentStep < 0) currentStep = 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Order Status",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Stepper(
-          physics: const NeverScrollableScrollPhysics(),
-          currentStep: currentStep,
-          controlsBuilder: (_, __) => const SizedBox(),
-          steps: statusSteps
-              .map(
-                (s) => Step(
-              title: Text(s),
-              content: const SizedBox(),
-              isActive: statusSteps.indexOf(s) <= currentStep,
-              state: statusSteps.indexOf(s) <= currentStep
-                  ? StepState.complete
-                  : StepState.indexed,
-            ),
-          )
-              .toList(),
-        ),
-      ],
-    );
-  }
-
-  // --- Delivery Address (Placeholder for now) ---
-  Widget _buildDeliveryAddress() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text("Delivery Address",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        Text("123, Green Park Street\nMumbai, Maharashtra - 400001"),
-      ],
-    );
-  }
-
-  // --- Price Details ---
-  Widget _buildPriceDetails(double total) {
-    const double deliveryFee = 0.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Price Details",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Items Total"),
-            Text("€${total.toStringAsFixed(2)}"),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text("Delivery Fee"),
-            Text("€0.00"),
-          ],
-        ),
-        const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Total Amount",
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            Text("€${(total + deliveryFee).toStringAsFixed(2)}",
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // --- Order Info (ID, Payment, Date) ---
-  Widget _buildOrderInfo(OrderModel order) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Order ID: ${order.orderId}",
-            style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text("Payment Status: ${order.paymentStatus}",
-            style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(
-          "Ordered On: ${order.createdAt.toLocal().toString().split(' ').first}",
-          style: const TextStyle(color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
-  // --- Cancel Button ---
-  Widget _buildCancelButton(BuildContext context, OrderModel order) {
-    final isCancellable =
-        order.status.toLowerCase() == 'placed' || order.status.toLowerCase() == 'processing';
-
-    return Center(
-      child: ElevatedButton(
-        onPressed: isCancellable
-            ? () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Order Cancelled")),
-          );
-        }
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isCancellable ? Colors.red : Colors.grey,
-          minimumSize: const Size(200, 48),
-        ),
-        child: const Text("Cancel Order"),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }

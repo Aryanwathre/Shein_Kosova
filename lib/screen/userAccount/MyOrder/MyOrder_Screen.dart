@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
+import 'package:shein_kosova/utils/formatedPrice.dart';
 
 import '../../../models/order_model.dart';
 import '../../../provider/orders_provider.dart';
@@ -109,14 +111,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     "Payment: ${order.paymentStatus}",
                     style: const TextStyle(fontSize: 13, color: Colors.black87),
                   ),
-                  Text(
-                    "€${order.totalAmount.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.blueGrey,
-                    ),
-                  ),
+                  styledPrice(order.totalAmount, color: AppColors.textNormal),
                 ],
               ),
 
@@ -165,29 +160,85 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   Color getStatusBackgroundColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
+    switch (status.toUpperCase()) {
+      case 'PENDING':
         return Colors.orange.shade100;
-      case 'accepted':
+
+      case 'PROCESSING':
+        return Colors.blue.shade100;
+
+      case 'CONFIRMED':
+        return Colors.blue.shade100;
+
+      case 'SHIPPED':
+        return Colors.blue.shade100;
+
+      case 'OUT_FOR_DELIVERY':
+        return Colors.lightBlue.shade100;
+
+      case 'DELIVERED':
         return Colors.green.shade100;
-      case 'rejected':
+
+      case 'RETURN_REQUESTED':
+        return Colors.purple.shade100;
+
+      case 'RETURNED':
+        return Colors.purple.shade100;
+
+      case 'REFUND_INITIATED':
+        return Colors.teal.shade100;
+
+      case 'REFUND_COMPLETED':
+        return Colors.teal.shade100;
+
+      case 'CANCELLED':
         return Colors.red.shade100;
+
       default:
         return Colors.grey.shade200;
     }
   }
 
+
   Color getStatusTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
+    switch (status.toUpperCase()) {
+      case 'PENDING':
         return Colors.orange;
-      case 'accepted':
+
+      case 'PROCESSING':
+        return Colors.blue;
+
+      case 'CONFIRMED':
+        return Colors.blue;
+
+      case 'SHIPPED':
+        return Colors.blue;
+
+      case 'OUT_FOR_DELIVERY':
+        return Colors.lightBlue;
+
+      case 'DELIVERED':
         return Colors.green;
-      case 'rejected':
+
+      case 'RETURN_REQUESTED':
+        return Colors.purple;
+
+      case 'RETURNED':
+        return Colors.purple;
+
+      case 'REFUND_INITIATED':
+        return Colors.teal;
+
+      case 'REFUND_COMPLETED':
+        return Colors.teal;
+
+      case 'CANCELLED':
         return Colors.red;
+
       default:
         return Colors.grey;
     }
   }
+
 
 }

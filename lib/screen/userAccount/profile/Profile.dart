@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shein_kosova/screen/userAccount/AboutUs_Screen.dart';
-import 'package:shein_kosova/screen/userAccount/HelpCenter_Screen.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../provider/Profile_provider.dart';
-import '../../../provider/AuthProvider.dart'; // Import AuthProvider for logout
-import '../Address/Addresses_Screen.dart';
-import '../MyOrder/MyOrder_Screen.dart';
-import '../Wishlist_Screen.dart';
-import 'edit_profile_screen.dart';
+import '../../../provider/auth_provider.dart'; // Import AuthProvider for logout
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -55,6 +50,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final authProvider = context.watch<AuthProvider>();
+
+    if (!authProvider.isAuthenticated) {
+      // Safety fallback (should rarely happen)
+      return const Center(child: CircularProgressIndicator());
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Profile"),
@@ -79,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     TextButton(
                         onPressed: _handleLogout,
-                        child: Text('Logout', style: TextStyle(color: Colors.red))
+                        child: const Text('Logout', style: TextStyle(color: Colors.red))
                     )
                   ],
                 ),
@@ -100,12 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       name: user.fullName,
                       email: user.email,
                       onEdit: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditProfileScreen(user: user),
-                          ),
-                        );
+                        context.push('/edit-profile', extra: user);
                       },
                     ),
                     const Divider(),
@@ -185,31 +182,26 @@ class _ProfileMenu extends StatelessWidget {
             icon: Icons.shopping_bag_outlined,
             title: "My Orders",
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MyOrdersScreen()));
+              context.push('/my-orders');
             }),
         _MenuTile(
             icon: Icons.favorite_border,
             title: "Wishlist",
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const WishlistScreen()));
+              context.push('/wishlist');
             }),
         _MenuTile(
             icon: Icons.notifications_none,
             title: "Notifications",
             onTap: () {
-              // TODO: Navigate to Notifications Page
+              context.push('/notifications');
             }),
         const Divider(),
         _MenuTile(
             icon: Icons.location_on_outlined,
             title: "Saved Addresses",
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SavedAddressesPage()),
-              );
+              context.push('/addresses');
             }),
         _MenuTile(
             icon: Icons.lock_outline,
@@ -222,15 +214,13 @@ class _ProfileMenu extends StatelessWidget {
             icon: Icons.help_outline,
             title: "Help Center",
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const HelpCenterPage()));
+              context.push('/help-center');
             }),
         _MenuTile(
             icon: Icons.info_outline,
             title: "About Us",
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const AboutUsPage()));
+              context.push('/about-us');
             }),
         const Divider(),
         _MenuTile(

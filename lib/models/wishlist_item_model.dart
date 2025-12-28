@@ -13,10 +13,10 @@ class WishlistItemModel {
 
   factory WishlistItemModel.fromJson(Map<String, dynamic> json) {
     return WishlistItemModel(
-      wishlistItemId: json['wishlistItemId'] as int,
-      productId: json['productId'] as int,
-      productName: json['productName'] as String,
-      mainImageUrl: json['mainImageUrl'] as String,
+      wishlistItemId: int.tryParse(json['wishlistItemId'].toString()) ?? 0,
+      productId: int.tryParse(json['productId'].toString()) ?? 0,
+      productName: json['productName'] ?? '',
+      mainImageUrl: json['mainImageUrl'] ?? '',
     );
   }
 }

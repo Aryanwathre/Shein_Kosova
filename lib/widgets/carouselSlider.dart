@@ -1,22 +1,49 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shein_kosova/models/BannerModel.dart';
 
-CarouselSlider buildCarouselSlider(List<Widget> imageSliders, BuildContext context, onTap) {
-  return CarouselSlider(
-    options: CarouselOptions(
-      autoPlay: true,
-      height: 400
+Widget buildCarouselSlider(
+    List<BannerModel> banners,
+    BuildContext context,
+    ) {
 
-    ),
-    items: List.generate(
-      imageSliders.length,
-      (index) => Container(
-        child: GestureDetector(
-          onTap: () => onTap[index](),
-          child: imageSliders[index],
-        ),
+  return RepaintBoundary(
+    child: CarouselSlider(
+      options: CarouselOptions(
+        aspectRatio: 4/5,
+        viewportFraction: 1.0,
+        autoPlay: true,
+        autoPlayInterval: const Duration(seconds: 5),
+        autoPlayAnimationDuration: const Duration(milliseconds: 800),
+        enableInfiniteScroll: true,
+        enlargeCenterPage: false,
       ),
+      items: banners.map((banner) {
+        return GestureDetector(
+          onTap: () {
+            debugPrint("Clicked Banner: ${banner.imageUrl}");
+          },
+          child: SizedBox(
+            width: double.infinity,
+            child: CachedNetworkImage(
+              alignment: Alignment.bottomCenter,
+              fit: BoxFit.fitWidth,
+              imageUrl: banner.imageUrl,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[200],
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, size: 50),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     ),
-
   );
 }

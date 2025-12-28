@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
-import '../../provider/ProductDetailsProvider.dart';
 import '../ProductDetails/productDetails.dart';
 
 

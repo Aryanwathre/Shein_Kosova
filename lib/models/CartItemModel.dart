@@ -1,13 +1,13 @@
-import 'dart:convert';
 
 class CartItem {
-  final String id;        // This will store the unique 'cartItemId' as a String
-  final int productId;
-  final String name;      // This will store 'productName'
-  final String image;     // This will store 'mainImageUrl'
+  final String id;
+  final int productId; // Changed to int to match usage in provider
+  final String name;
+  final String image;
   final double price;
+  final String size;
   int quantity;
-  final double subtotal;  // Added subtotal as it's provided by the API
+  final double subtotal;
 
   CartItem({
     required this.id,
@@ -15,26 +15,24 @@ class CartItem {
     required this.name,
     required this.image,
     required this.price,
+    required this.size,
     required this.quantity,
     required this.subtotal,
   });
 
-  /// The fromJson factory is the most critical part.
-  /// It now maps the keys from your API response directly to the model's fields.
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      // Use the actual keys from your API response
-      id: json['cartItemId']?.toString() ?? '', // Convert int to String for the ID
-      productId: json['productId'] ?? 0,
-      name: json['productName'] ?? 'Unnamed Product', // Key is 'productName'
-      image: json['mainImageUrl'] ?? '',           // Key is 'mainImageUrl'
+      id: json['cartItemId']?.toString() ?? '',
+      productId: int.tryParse(json['productId']?.toString() ?? '0') ?? 0,
+      name: json['productName'] ?? 'Unnamed Product',
+      image: json['mainImageUrl'] ?? '',
       price: (json['price'] as num? ?? 0.0).toDouble(),
+      size: json['size'] ?? '',
       quantity: (json['quantity'] as num? ?? 0).toInt(),
       subtotal: (json['subtotal'] as num? ?? 0.0).toDouble(),
     );
   }
 
-  /// The toJson method can be updated for consistency, though it's less critical for display.
   Map<String, dynamic> toJson() {
     return {
       'cartItemId': id,
@@ -42,6 +40,7 @@ class CartItem {
       'productName': name,
       'mainImageUrl': image,
       'price': price,
+      'size' : size,
       'quantity': quantity,
       'subtotal': subtotal,
     };
@@ -49,6 +48,6 @@ class CartItem {
 
   @override
   String toString() {
-    return 'CartItem(id: $id, name: $name, quantity: $quantity, price: $price)';
+    return 'CartItem(id: $id, name: $name, quantity: $quantity, price: $price, size: $size)';
   }
 }

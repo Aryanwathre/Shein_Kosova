@@ -1,4 +1,4 @@
-package com.example.shein_kosova
+package com.shein_ks.sheinKosova
 
 import io.flutter.embedding.android.FlutterActivity
 

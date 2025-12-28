@@ -56,12 +56,14 @@ class CartProvider extends ChangeNotifier {
   Future<bool> addToCart({
     required int productId,
     required int quantity,
+    required String sizes,
   }) async {
     _setState(CartState.updating);
     try {
       final response = await _api.cartApi.addToCart(
         productId: productId,
         quantity: quantity,
+        size: sizes,
       );
 
       if (response.success) {
@@ -79,24 +81,35 @@ class CartProvider extends ChangeNotifier {
 
   // Use the unique cartItemId (which is an int in our model)
   Future<bool> updateQuantity(int cartItemId, int newQuantity) async {
-    if (newQuantity <= 0) {
-      return await removeFromCart(cartItemId);
-    }
-    _setState(CartState.updating);
+    final index = _items.indexWhere((i) => i.id == cartItemId.toString());
+    if (index == -1) return false;
+
+    // Save old quantity (in case we need rollback)
+    final oldQuantity = _items[index].quantity;
+
+    // Optimistic update
+    _items[index].quantity = newQuantity;
+    notifyListeners();
+
     try {
       final response = await _api.cartApi.updateCartItem(
-        cartItemId: cartItemId.toString(), // API expects a String
+        cartItemId: cartItemId.toString(),
         quantity: newQuantity,
       );
+
       if (response.success) {
         await loadCart(showLoading: false);
         return true;
       } else {
-        _setError(response.error ?? 'Could not update quantity');
+        // Rollback
+        _items[index].quantity = oldQuantity;
+        notifyListeners();
         return false;
       }
     } catch (e) {
-      _setError('A network error occurred: ${e.toString()}');
+      // Rollback on network error
+      _items[index].quantity = oldQuantity;
+      notifyListeners();
       return false;
     }
   }
