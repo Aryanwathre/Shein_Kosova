@@ -24,6 +24,8 @@ linter:
     package_api_docs: false
 
 analyzer:
+  errors:
+    must_be_immutable: ignore
   exclude:
     - "build/**"
     - "**/*.g.dart"

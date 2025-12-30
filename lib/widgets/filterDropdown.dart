@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shein_kosova/services/api_service.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
-import 'package:shein_kosova/utils/theam.dart';
 
 class FilterSection extends StatefulWidget {
   String lable;

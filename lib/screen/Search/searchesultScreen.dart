@@ -1,15 +1,16 @@
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
-import '../../provider/auth_provider.dart';
-import '../../provider/cart_provider.dart';
-import '../../provider/search_provider.dart';
-import '../../widgets/SearchBar.dart';
-import '../../widgets/ProductCard.dart';
-import '../../widgets/login_prompt_sheet.dart';
-import '../../utils/AppColors.dart';
+
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/provider/search_provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
+import 'package:shein_kosova/widgets/ProductCard.dart';
+import 'package:shein_kosova/widgets/SearchBar.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 class SearchResultScreen extends StatefulWidget {
   final String? categoryId;
@@ -382,7 +383,19 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           case SearchState.initial:
             return const Center(child: Text("Start typing to search for products."));
           case SearchState.loading:
-            return const Center(child: CircularProgressIndicator());
+            return GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _viewAsGrid ? 2 : 1,
+                childAspectRatio: _viewAsGrid ? 0.57 : 2.5,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: 6,
+              itemBuilder: (context, index) {
+                return const ShimmerWidget.rectangular(height: 250);
+              },
+            );
           case SearchState.error:
             return Center(child: Text(provider.errorMessage ?? 'An error occurred.'));
           case SearchState.loaded:
@@ -393,7 +406,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               padding: const EdgeInsets.all(8),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: _viewAsGrid ? 2 : 1,
-                childAspectRatio: _viewAsGrid ? 0.6 : 2.5,
+                childAspectRatio: _viewAsGrid ? 0.57 : 2.5,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
@@ -435,7 +448,19 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         return Consumer<SearchProvider>(
           builder: (context, provider, _) {
             if (provider.isLoadingProductDetails || provider.selectedProductDetails == null) {
-              return const Padding(padding: EdgeInsets.all(25), child: Center(child: CircularProgressIndicator()));
+              return Padding(
+                padding: const EdgeInsets.all(25),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const ShimmerWidget.rectangular(height: 150),
+                    const SizedBox(height: 10),
+                    const ShimmerWidget.rectangular(height: 20, width: 200),
+                    const SizedBox(height: 10),
+                    const ShimmerWidget.rectangular(height: 40),
+                  ],
+                ),
+              );
             }
 
             final detail = provider.selectedProductDetails!;

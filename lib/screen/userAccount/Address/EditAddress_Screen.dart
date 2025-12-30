@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
-import 'package:shein_kosova/provider/address_Provider.dart';
+import 'package:shein_kosova/provider/address_provider.dart';
 import '../../../widgets/custom_text_fields.dart';
 
 class EditAddressScreen extends StatefulWidget {
@@ -40,7 +40,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     _stateController = TextEditingController(text: a.state);
     _countryController = TextEditingController(text: a.country);
     _postalCodeController = TextEditingController(text: a.postalCode);
-    _isDefault = a.isDefault ?? false;
+    _isDefault = a.isDefault;
   }
 
   @override
@@ -62,7 +62,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     return
       _receiverNameController.text.trim() != a.receiverName ||
           _contactNumberController.text.trim() != a.contactNumber ||
-          _isDefault != (a.isDefault ?? false) ||
+          _isDefault != (a.isDefault) ||
           _addressLine1Controller.text.trim() != a.addressLine1 ||
           _addressLine2Controller.text.trim() != a.addressLine2 ||
           _cityController.text.trim() != a.city ||

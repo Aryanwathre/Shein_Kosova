@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
+import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
-import '../ProductDetails/productDetails.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 
 class ProductGridScreen extends StatefulWidget {
@@ -37,7 +38,17 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
           // Handle the different states of the product list
           switch (provider.listState) {
             case ProductListState.loading:
-              return const Center(child: CircularProgressIndicator());
+              return GridView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: 6,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.58,
+                ),
+                itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
+              );
             case ProductListState.error:
               return Center(
                   child: Text(provider.listErrorMessage ?? "Failed to load products"));

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shein_kosova/screen/Auth/loginScreen.dart';
-import '../services/api_service.dart';
-import '../widgets/bottomNavigationBar.dart';
+import 'package:shein_kosova/services/api_service.dart';
+import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 enum AuthState {
   initial,

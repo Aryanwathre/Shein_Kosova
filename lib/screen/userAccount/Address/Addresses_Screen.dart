@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 class SavedAddressesPage extends StatefulWidget {
   const SavedAddressesPage({super.key});
@@ -33,7 +34,14 @@ class _SavedAddressesPageState extends State<SavedAddressesPage> {
         child: Consumer<AddressProvider>(
           builder: (context, provider, _) {
             if (provider.isLoading && provider.addresses.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 3,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: ShimmerWidget.rectangular(height: 80),
+                ),
+              );
             }
             if (provider.errorMessage != null && provider.addresses.isEmpty) {
               return Center(child: Text(provider.errorMessage ?? 'An error occurred.'));

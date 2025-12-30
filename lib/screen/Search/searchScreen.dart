@@ -1,6 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shein_kosova/screen/Search/searchesultScreen.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 import '../../provider/search_provider.dart';
 import '../../widgets/SearchBar.dart';
 import '../ProductDetails/productDetails.dart';
@@ -57,7 +58,14 @@ _searchController.dispose();
 
       // 👉 2. Show loader
       if (provider.state == SearchState.loading) {
-        return const Center(child: CircularProgressIndicator());
+        return ListView.builder(
+          itemCount: 5,
+          itemBuilder: (context, index) => const ListTile(
+            leading: ShimmerWidget.rectangular(width: 50, height: 50),
+            title: ShimmerWidget.rectangular(height: 16),
+            subtitle: ShimmerWidget.rectangular(height: 12, width: 50),
+          ),
+        );
       }
 
       // 👉 3. Error from backend (optional)
@@ -76,11 +84,12 @@ _searchController.dispose();
         itemBuilder: (context, index) {
           final product = provider.searchResults[index];
           return ListTile(
-            leading: Image.network(
-              product.mainImageUrl ?? '',
+            leading: CachedNetworkImage(
+              imageUrl: product.mainImageUrl,
               width: 50,
               height: 50,
               fit: BoxFit.cover,
+              placeholder: (context, url) => const ShimmerWidget.rectangular(width: 50, height: 50),
             ),
             title: Text(
               product.name,
@@ -106,4 +115,3 @@ _searchController.dispose();
     );
   }
 }
-

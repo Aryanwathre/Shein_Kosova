@@ -1,5 +1,5 @@
 import 'package:shein_kosova/models/AddressModel.dart';
-import 'order_item_model.dart';
+import 'package:shein_kosova/models/order_item_model.dart';
 
 class OrderModel {
   final String orderId;

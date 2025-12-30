@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:input_quantity/input_quantity.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 import '../../provider/cart_provider.dart';
 import '../../models/CartItemModel.dart';
 
@@ -36,7 +38,13 @@ class _CartScreenState extends State<CartScreen> {
           selector: (_, provider) => provider.state,
           builder: (context, state, child) {
             if (state == CartState.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return ListView.builder(
+                itemCount: 3,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ShimmerWidget.rectangular(height: 100),
+                ),
+              );
             }
             if (state == CartState.error) {
               return Center(
@@ -107,11 +115,13 @@ class _CartItemTile extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                item.image,
+              child: CachedNetworkImage(
+                imageUrl: item.image,
                 height: 80,
                 width: 80,
                 fit: BoxFit.cover,
+                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 80, width: 80),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
             const SizedBox(width: 12),

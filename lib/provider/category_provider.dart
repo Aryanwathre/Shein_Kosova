@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shein_kosova/services/api_service.dart';
 import '../models/category_model.dart';
@@ -8,6 +9,10 @@ class CategoryProvider extends ChangeNotifier {
   List<CategoryModel> _categories = [];
   List<CategoryModel> get categories => _categories;
 
+  // Products indexed by categoryId to prevent tab bleeding
+  final Map<int, List<ProductModel>> _categoryProductsMap = {};
+  final Map<int, bool> _loadingMap = {};
+
   // API manager
   final ApiServiceManager _api = ApiServiceManager();
 
@@ -16,12 +21,11 @@ class CategoryProvider extends ChangeNotifier {
   bool _hasMorePages = true;
   bool get hasMorePages => _hasMorePages;
 
-  // To prevent multiple API calls
   bool isFetchingNextPage = false;
 
-  // Product list by category
-  List<ProductModel> _productsByCategory = [];
-  List<ProductModel> get productsByCategory => _productsByCategory;
+  // Get products for a specific category
+  List<ProductModel> getProductsForCategory(int categoryId) => _categoryProductsMap[categoryId] ?? [];
+  bool isCategoryLoading(int categoryId) => _loadingMap[categoryId] ?? false;
 
   Future<void> fetchCategories({bool append = false}) async {
     if (isFetchingNextPage) return;
@@ -38,7 +42,6 @@ class CategoryProvider extends ChangeNotifier {
       if (response.success && response.data != null) {
         final newItems = response.data!.content;
 
-        // If API returns no items → stop pagination
         if (newItems.isEmpty) {
           _hasMorePages = false;
         } else {
@@ -47,11 +50,8 @@ class CategoryProvider extends ChangeNotifier {
           } else {
             _categories = newItems;
           }
-
-          _currentPage++; // Move to next page
+          _currentPage++;
         }
-      } else {
-        debugPrint("❌ Failed to load categories: ${response.error}");
       }
     } catch (e) {
       debugPrint("⚠️ Exception loading categories: $e");
@@ -76,7 +76,6 @@ class CategoryProvider extends ChangeNotifier {
 
       if (response.success && response.data != null) {
         temp.addAll(response.data!.content);
-
         hasMore = !response.data!.last;
         page++;
       } else {
@@ -88,8 +87,15 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   Future<void> fetchProductsByCategory(int categoryId) async {
+    // If we already have data and it's not loading, don't re-fetch unless forced
+    if (_categoryProductsMap.containsKey(categoryId) && !(_loadingMap[categoryId] ?? false)) {
+      return;
+    }
+
+    _loadingMap[categoryId] = true;
+    notifyListeners();
+
     try {
       final response = await _api.productsApi.getProductByCategory("$categoryId");
 
@@ -98,20 +104,21 @@ class CategoryProvider extends ChangeNotifier {
             ? response.data 
             : (response.data['data'] ?? []);
 
-        _productsByCategory = productList
+        _categoryProductsMap[categoryId] = productList
             .map<ProductModel>((json) => ProductModel.fromJson(json))
             .toList();
-
-        notifyListeners();
       } else {
-        debugPrint("⚠️ No products found for category $categoryId: ${response.error}");
+        _categoryProductsMap[categoryId] = [];
       }
     } catch (e) {
       debugPrint("⚠️ Error loading products by category: $e");
+      _categoryProductsMap[categoryId] = [];
+    } finally {
+      _loadingMap[categoryId] = false;
+      notifyListeners();
     }
   }
 
-  // Add category manually
   void addCategory(CategoryModel category) {
     _categories.add(category);
     notifyListeners();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 import '../../../models/order_model.dart';
 import '../../../provider/orders_provider.dart';
@@ -29,7 +30,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("My Orders")),
       body: ordersProvider.state == CheckoutState.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListView.separated(
+              padding: const EdgeInsets.all(8),
+              itemCount: 5,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 150),
+            )
           : orders.isEmpty
           ? const Center(child: Text("No orders found"))
           : ListView.separated(

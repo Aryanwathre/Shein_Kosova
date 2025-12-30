@@ -5,6 +5,7 @@ import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 import 'login_prompt_sheet.dart';
 
 class ProductCard extends StatelessWidget {
@@ -45,16 +46,7 @@ class ProductCard extends StatelessWidget {
                       imageUrl: product.mainImageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[100],
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
+                      placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
                       errorWidget: (context, url, error) => Container(
                         color: Colors.grey[200],
                         child: const Icon(Icons.broken_image, color: Colors.grey),
@@ -199,12 +191,7 @@ class ProductListCard extends StatelessWidget {
                 height: 100,
                 width: 80,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  height: 100,
-                  width: 80,
-                  color: Colors.grey[100],
-                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                ),
+                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 80),
                 errorWidget: (context, url, error) => Container(
                   height: 100,
                   width: 80,

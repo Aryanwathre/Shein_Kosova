@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-import '../../provider/category_provider.dart';
 import '../../widgets/SearchBar.dart';
 import '../../widgets/login_prompt_sheet.dart';
 
@@ -23,14 +24,11 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
   void initState() {
     super.initState();
 
-    _gridScrollController.addListener(() {
-      final provider = Provider.of<CategoryProvider>(context, listen: false);
-
-      if (_gridScrollController.position.pixels ==
-          _gridScrollController.position.maxScrollExtent) {
-        if (provider.hasMorePages && !provider.isFetchingNextPage) {
-          provider.fetchCategories(append: true);
-        }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      // Re-use data from HomeProvider if available, otherwise initialize it
+      if (homeProvider.categories.isEmpty) {
+        homeProvider.initHome();
       }
     });
   }
@@ -80,26 +78,39 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
   }
 
   Widget _categoryGrid(BuildContext context) {
-    final categoryProvider = Provider.of<CategoryProvider>(context);
+    final homeProvider = Provider.of<HomeProvider>(context);
+    final categories = homeProvider.categories;
 
-    if (categoryProvider.categories.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
+    if (categories.isEmpty && homeProvider.state == HomeState.loading) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(10),
+        itemCount: 9,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 1.35,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+        ),
+        itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 80),
       );
+    }
+
+    if (categories.isEmpty && homeProvider.state != HomeState.loading) {
+      return const Center(child: Text("No categories found."));
     }
 
     return GridView.builder(
       controller: _gridScrollController,
       padding: const EdgeInsets.all(10),
-      itemCount: categoryProvider.categories.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      itemCount: categories.length,
+      gridDelegate:  const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         childAspectRatio: 1.35,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
       ),
       itemBuilder: (context, index) {
-        final category = categoryProvider.categories[index];
+        final category = categories[index];
 
         return GestureDetector(
           onTap: () {

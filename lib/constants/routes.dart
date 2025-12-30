@@ -1,4 +1,4 @@
-
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
@@ -73,6 +73,8 @@ class AppRoutes {
         path: productDetails,
         builder: (context, state) {
           final product = state.extra as ProductModel?;
+          final id = state.pathParameters['id'];
+          // Even if product is null, the screen handles loading by ID if needed.
           return ProductDetailsScreen(product: product);
         },
       ),

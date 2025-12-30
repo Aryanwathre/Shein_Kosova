@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
-import 'package:shein_kosova/provider/category_provider.dart';
+import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
+import 'package:shein_kosova/utils/BiteClipper.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
-
-import '../../provider/banner_provider.dart';
-import '../../utils/BiteClipper.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 import '../../widgets/carouselSlider.dart';
 import '../../models/category_model.dart';
 import '../../widgets/login_prompt_sheet.dart';
+import '../../models/ProductModel.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -33,27 +33,19 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final homeProvider = Provider.of<CategoryProvider>(context, listen: false);
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
-      final bannerProvider = Provider.of<BannerProvider>(context, listen: false);
 
-      await homeProvider.fetchAllCategories();
+      await homeProvider.initHome();
       wishlistProvider.loadWishlist();
-      await bannerProvider.fetchBanners();
       
       if (mounted && homeProvider.categories.isNotEmpty) {
         _tabController = TabController(
-          length: homeProvider.categories.length,
+          length: homeProvider.categories.length + 1,
           vsync: this,
         );
 
         _tabController!.addListener(_handleTabChange);
-
-        // Initial fetch for first category
-        homeProvider.fetchProductsByCategory(
-          int.parse(homeProvider.categories.first.id),
-        );
-
         setState(() {});
       }
     });
@@ -84,11 +76,16 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
   void _handleTabChange() {
     if (_tabController == null || _tabController!.indexIsChanging) return;
 
-    final homeProvider = Provider.of<CategoryProvider>(context, listen: false);
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     final selectedIndex = _tabController!.index;
 
-    final currentCategory = homeProvider.categories[selectedIndex];
-    homeProvider.fetchProductsByCategory(int.parse(currentCategory.id));
+    if (selectedIndex == 0) {
+      // Home tab (All)
+      homeProvider.fetchProductsByCategory(0);
+    } else {
+      final currentCategory = homeProvider.categories[selectedIndex - 1];
+      homeProvider.fetchProductsByCategory(int.parse(currentCategory.id));
+    }
   }
 
   @override
@@ -101,15 +98,21 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    // Performance optimization: Use Selector to only rebuild when categories change
-    return Selector<CategoryProvider, List<CategoryModel>>(
-      selector: (_, provider) => provider.categories,
-      builder: (context, categories, child) {
-        if (_tabController == null || categories.isEmpty) {
+    return Consumer<HomeProvider>(
+      builder: (context, homeProvider, child) {
+        if (homeProvider.state == HomeState.loading || _tabController == null) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
+
+        if (homeProvider.state == HomeState.error) {
+          return Scaffold(
+            body: Center(child: Text(homeProvider.errorMessage ?? "An error occurred")),
+          );
+        }
+
+        final categories = homeProvider.categories;
 
         return Scaffold(
           body: NestedScrollView(
@@ -119,19 +122,13 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
                 SliverAppBar(
                   automaticallyImplyLeading: false,
                   pinned: true,
-                  expandedHeight: 260,
+                  expandedHeight: MediaQuery.of(context).size.width * 0.6,
                   backgroundColor: _appBarColor,
                   elevation: 0,
                   toolbarHeight: 100,
                   stretch: true,
                   flexibleSpace: FlexibleSpaceBar(
-                    // stretchModes: const [StretchMode.zoomBackground],
-                    background: Selector<BannerProvider, List>(
-                      selector: (_, provider) => provider.banners,
-                      builder: (context, banners, _) {
-                        return buildCarouselSlider(banners.cast(), context);
-                      },
-                    ),
+                    background: buildCarouselSlider(homeProvider.banners, context),
                   ),
                   title: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 300),
@@ -178,9 +175,10 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
                               borderSide: BorderSide(width: 2.0, color: _tabLabelColor),
                               insets: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 4.0),
                             ),
-                            tabs: categories
-                                .map<Widget>((CategoryModel category) => Tab(text: category.name))
-                                .toList(),
+                            tabs: [
+                              const Tab(text: "Home"),
+                              ...categories.map<Widget>((CategoryModel category) => Tab(text: category.name)),
+                            ],
                           ),
                         ),
                       ],
@@ -191,9 +189,12 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
             },
             body: TabBarView(
               controller: _tabController,
-              children: categories.map<Widget>((category) {
-                return _CategoryProductsView(category: category);
-              }).toList(),
+              children: [
+                const _HomeLandingView(), // Dedicated view for "Home" tab with pill tags
+                ...categories.map<Widget>((category) {
+                  return _CategoryProductsView(categoryId: int.parse(category.id));
+                }),
+              ],
             ),
           ),
         );
@@ -202,9 +203,138 @@ class _HomescreenState extends State<Homescreen> with SingleTickerProviderStateM
   }
 }
 
+class _HomeLandingView extends StatelessWidget {
+  const _HomeLandingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        // Categories Grid (Showing all categories now)
+        SliverToBoxAdapter(
+          child: Consumer<HomeProvider>(
+            builder: (context, provider, _) => _CategoryGrid(categories: provider.categories),
+          ),
+        ),
+        
+        // Horizontal Pill Tags (For You, Deals, Trending, etc.)
+        SliverToBoxAdapter(
+          child: _TagSelector(),
+        ),
+
+        // Product Grid based on selected Tag
+        Consumer<HomeProvider>(
+          builder: (context, provider, _) {
+            final selectedTag = provider.selectedTag;
+            final products = provider.getProductsForTag(selectedTag);
+            final isLoading = provider.isTagLoading(selectedTag);
+
+            if (isLoading) {
+              return SliverPadding(
+                padding: const EdgeInsets.all(8),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.57,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const ProductCardShimmer(),
+                    childCount: 4,
+                  ),
+                ),
+              );
+            }
+
+            return SliverPadding(
+              padding: const EdgeInsets.all(8),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.57,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final product = products[index];
+                    return ProductCard(
+                      onTap: () => context.push('/product/${product.id}', extra: product),
+                      context: context,
+                      product: product,
+                    );
+                  },
+                  childCount: products.length,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _TagSelector extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HomeProvider>(
+      builder: (context, provider, _) {
+        // Build static tags + dynamic tags from API
+        final allTags = ["All","For You", ...provider.tags.map((t) => t[0].toUpperCase() + t.substring(1))];
+        
+        return Container(
+          height: 50,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            itemCount: allTags.length,
+            itemBuilder: (context, index) {
+              final tag = allTags[index];
+              final isSelected = provider.selectedTag == tag;
+              
+              return GestureDetector(
+                onTap: () => provider.setSelectedTag(tag),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.black : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: isSelected ? [BoxShadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 2))] : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (tag == "New In") Icon(Icons.auto_awesome, size: 14, color: isSelected ? Colors.white : Colors.black),
+                      if (tag == "Deals") Icon(Icons.local_offer, size: 14, color: isSelected ? Colors.white : Colors.black),
+                      if (tag == "Bestsellers") Icon(Icons.emoji_events, size: 14, color: isSelected ? Colors.white : Colors.black),
+                      if (tag == "New In" || tag == "Deals" || tag == "Bestsellers") const SizedBox(width: 6),
+                      Text(
+                        tag,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _CategoryProductsView extends StatefulWidget {
-  final CategoryModel category;
-  const _CategoryProductsView({required this.category});
+  final int categoryId;
+  const _CategoryProductsView({required this.categoryId});
 
   @override
   State<_CategoryProductsView> createState() => _CategoryProductsViewState();
@@ -212,37 +342,59 @@ class _CategoryProductsView extends StatefulWidget {
 
 class _CategoryProductsViewState extends State<_CategoryProductsView> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true; // Keeps the tab state alive for better performance
+  bool get wantKeepAlive => true; 
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final homeProvider = Provider.of<CategoryProvider>(context, listen: false);
+    final categoryId = widget.categoryId;
 
     return RefreshIndicator(
       onRefresh: () async {
-        await homeProvider.fetchProductsByCategory(int.parse(widget.category.id));
+        await context.read<HomeProvider>().fetchProductsByCategory(categoryId);
       },
       child: CustomScrollView(
-        key: PageStorageKey<String>(widget.category.id),
+        key: PageStorageKey<String>(categoryId.toString()),
         slivers: [
           SliverToBoxAdapter(
-            child: _CategoryGrid(categories: homeProvider.categories),
+            child: Consumer<HomeProvider>(
+              builder: (context, provider, _) => _CategoryGrid(categories: provider.categories),
+            ),
           ),
-          Selector<CategoryProvider, List>(
-            selector: (_, provider) => provider.productsByCategory,
-            builder: (context, products, _) {
+          Consumer<HomeProvider>(
+            builder: (context, provider, _) {
+              final products = provider.getProductsForCategory(categoryId);
+              final isLoading = provider.isCategoryLoading(categoryId);
+
               if (products.isEmpty) {
+                if (isLoading) {
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                    sliver: SliverGrid(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.57,
+                        crossAxisSpacing: 5,
+                        mainAxisSpacing: 5,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const ProductCardShimmer(),
+                        childCount: 4,
+                      ),
+                    ),
+                  );
+                }
                 return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: Text("No products found")),
                 );
               }
+
               return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.5,
+                    childAspectRatio: 0.57,
                     crossAxisSpacing: 5,
                     mainAxisSpacing: 5,
                   ),
@@ -277,15 +429,18 @@ class _CategoryGrid extends StatelessWidget {
       height: MediaQuery.of(context).size.height * 0.4,
       child: GridView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(10),
-        itemCount: categories.length,
+        padding: const EdgeInsets.all(5),
+        itemCount: categories.isEmpty ? 15 : categories.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           childAspectRatio: 1.35,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
+          mainAxisSpacing: 5,
+          crossAxisSpacing: 5,
         ),
         itemBuilder: (context, index) {
+          if (categories.isEmpty) {
+            return const CategoryItemShimmer();
+          }
           String categoryId = categories[index].id.toString();
           String categoryName = categories[index].name;
           return GestureDetector(

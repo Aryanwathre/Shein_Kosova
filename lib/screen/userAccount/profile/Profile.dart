@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 import '../../../provider/Profile_provider.dart';
 import '../../../provider/auth_provider.dart'; // Import AuthProvider for logout
@@ -55,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (!authProvider.isAuthenticated) {
       // Safety fallback (should rarely happen)
-      return const Center(child: CircularProgressIndicator());
+      return const Scaffold(body: Center(child: ShimmerWidget.rectangular(height: 200)));
     }
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Handle different states from the provider
           switch (provider.state) {
             case ProfileState.loading:
-              return const Center(child: CircularProgressIndicator());
+              return _buildShimmerLoading();
             case ProfileState.error:
               return Center(
                 child: Column(
@@ -115,6 +116,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         },
       ),
+    );
+  }
+
+  Widget _buildShimmerLoading() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Row(
+          children: [
+            const ShimmerWidget.circular(width: 70, height: 70),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerWidget.rectangular(height: 24, width: 150),
+                  const SizedBox(height: 10),
+                  const ShimmerWidget.rectangular(height: 16, width: 200),
+                ],
+              ),
+            )
+          ],
+        ),
+        const SizedBox(height: 40),
+        ...List.generate(5, (index) => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: ShimmerWidget.rectangular(height: 50),
+        )),
+      ],
     );
   }
 }

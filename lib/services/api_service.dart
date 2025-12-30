@@ -701,16 +701,6 @@ class OrdersApi extends BaseApi {
   }
 }
 
-class BannerApi extends BaseApi {
-  Future<ApiResponse<List<dynamic>>> getAllBanners() async {
-    return makeRequest(
-      requireAuth: false,
-      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}banners'), headers: headers),
-      parser: (json) => json,
-    );
-  }
-}
-
 class ReviewsApi extends BaseApi {
   Future<ApiResponse<Map<String, dynamic>>> addReview({required String productId, required double rating, required String comment}) async {
     return makeRequest(
@@ -737,6 +727,7 @@ class ReviewsApi extends BaseApi {
   }
 }
 
+
 class SizesApi extends BaseApi {
   Future<ApiResponse<List<String>>> getAvailableSizes() async {
     return makeRequest(
@@ -753,6 +744,57 @@ class NotificationsApi extends BaseApi {
       requireAuth: true,
       request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}notifications'), headers: headers),
       parser: (json) => List<Map<String, dynamic>>.from(json['data'] ?? json ?? []),
+    );
+  }
+}
+
+class HomeApi extends BaseApi {
+  Future<ApiResponse<dynamic>> getProductsByTag(String tag) async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}products/tag?tag=$tag'), headers: headers),
+      parser: (json) => json,
+    );
+  }
+
+  Future<ApiResponse<List<String>>> getProductsTags() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}products/tags'), headers: headers),
+      parser: (json) => List<String>.from(json),
+    );
+  }
+
+  Future<ApiResponse<List<CategoryModel>>> getRandomCategories() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}home/categories/random'), headers: headers),
+      parser: (json) => (json as List).map((item) => CategoryModel.fromJson(item)).toList(),
+    );
+  }
+
+  Future<ApiResponse<dynamic>> getForYouProducts() async {
+    return makeRequest(
+      requireAuth: true,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}home/for-you'), headers: headers),
+      parser: (json) => json,
+    );
+  }
+
+  Future<ApiResponse<List<dynamic>>> getAllBanners() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}banners'), headers: headers),
+      parser: (json) => json,
+    );
+  }
+
+
+  Future<ApiResponse<dynamic>> getDeals() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}home/deals'), headers: headers),
+      parser: (json) => json,
     );
   }
 }
@@ -774,9 +816,9 @@ class ApiServiceManager {
   final WishlistApi wishlistApi = WishlistApi();
   final OrdersApi ordersApi = OrdersApi();
   final ReviewsApi reviewsApi = ReviewsApi();
-  final BannerApi bannerApi = BannerApi();
   final SizesApi sizesApi = SizesApi();
   final NotificationsApi notificationsApi = NotificationsApi();
+  final HomeApi homeApi = HomeApi();
 
   Future<bool> isUserLoggedIn() async { return await TokenManager.isTokenValid(); }
   Future<Map<String, dynamic>?> getCurrentUser() async { return await TokenManager.getUserData(); }
