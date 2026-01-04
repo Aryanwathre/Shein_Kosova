@@ -272,9 +272,10 @@ class SearchProvider extends ChangeNotifier {
   }
 
 
-  void clearFilters() {
-    _query = '';
-    _categoryId = null;
+  void clearFilters({bool keepCategoryId = false, bool keepQuery = false}) {
+    if (!keepQuery) _query = '';
+    if (!keepCategoryId) _categoryId = null;
+    
     _minPrice = null;
     _maxPrice = null;
     _minRating = 0.0;

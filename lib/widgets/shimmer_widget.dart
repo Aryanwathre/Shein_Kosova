@@ -20,7 +20,7 @@ class ShimmerWidget extends StatelessWidget {
     this.shapeBorder = const CircleBorder(),
   });
 
-   ShimmerWidget.rounded({
+  ShimmerWidget.rounded({
     super.key,
     this.width = double.infinity,
     required this.height,
@@ -50,7 +50,8 @@ class ProductCardShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Flexible(
+        AspectRatio(
+          aspectRatio: 0.72,
           child: ShimmerWidget.rounded(
             height: double.infinity,
             borderRadius: 8,
@@ -74,7 +75,7 @@ class CategoryItemShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-         ShimmerWidget.rounded(
+        ShimmerWidget.rounded(
           height: 60,
           width: 60,
           borderRadius: 20,
@@ -82,6 +83,75 @@ class CategoryItemShimmer extends StatelessWidget {
         const SizedBox(height: 8),
         const ShimmerWidget.rectangular(height: 10, width: 50),
       ],
+    );
+  }
+}
+
+class HomeShimmer extends StatelessWidget {
+  const HomeShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner Shimmer
+          ShimmerWidget.rectangular(height: MediaQuery.of(context).size.width * 0.6),
+          
+          const SizedBox(height: 16),
+          
+          // Categories Grid Shimmer
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: 5,
+              itemBuilder: (context, index) => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: CategoryItemShimmer(),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Tag Pill Shimmer
+          SizedBox(
+            height: 40,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: 4,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: ShimmerWidget.rounded(width: 80, height: 32, borderRadius: 20),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Product Grid Shimmer
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.57,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: 4,
+              itemBuilder: (context, index) => const ProductCardShimmer(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/ReviewModel.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 
 class RatingsReviewsWidget extends StatefulWidget {
   final double averageRating;
   final List<ReviewModel>? reviews;
-  VoidCallback voidCallback;
+  final VoidCallback voidCallback;
 
-   RatingsReviewsWidget({
+  const RatingsReviewsWidget({
     super.key,
     required this.averageRating,
     required this.reviews,
-    required this.voidCallback
+    required this.voidCallback,
   });
 
   @override
@@ -65,7 +68,7 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "(${widget.reviews!.length} reviews)",
+                        "(${widget.reviews?.length ?? 0} reviews)",
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -91,55 +94,66 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
               secondChild: Column(
                 children: [
                   const Divider(height: 20),
-                  ...widget.reviews!.map((review) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.blueGrey[100],
-                            child: Text(
-                              review.reviewerName[0].toUpperCase(),
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 16),
+                  if (widget.reviews != null)
+                    ...widget.reviews!.map((review) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.blueGrey[100],
+                              child: Text(
+                                review.reviewerName.isNotEmpty
+                                    ? review.reviewerName[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                    color: Colors.black, fontSize: 16),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  review.reviewerName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: 2),
-                                _buildStarRow(review.rating),
-                                const SizedBox(height: 4),
-                                Text(
-                                  review.comment,
-                                  style: const TextStyle(
-                                      color: Colors.black87, fontSize: 14),
-                                ),
-                              ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    review.reviewerName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  _buildStarRow(review.rating),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    review.comment,
+                                    style: const TextStyle(
+                                        color: Colors.black87, fontSize: 14),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                 ],
               ),
             ),
+            const SizedBox(height: 12),
 
-            GestureDetector(
-              onTap: widget.voidCallback,
-              child: Text(
-                  "Add Review",
-                style: const TextStyle(color: Colors.grey),
+            ElevatedButton(
+              onPressed: () async {
+                final authProvider = context.read<AuthProvider>();
+                if (authProvider.state != AuthState.authenticated) {
+                  await showLoginPrompt(context);
+                  if (authProvider.state != AuthState.authenticated) return;
+                }
+                widget.voidCallback();
+              },
+              child: const Text(
+                "Add Review",
+                style: TextStyle(color: Colors.white),
               ),
             )
           ],

@@ -53,16 +53,22 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Prioritize and await core data for immediate display
       await Future.wait([
         _fetchBanners(),
         _fetchAllCategories(),
-        _fetchTags(),
+        fetchProductsByCategory(0), // Load "All" products immediately
       ]);
       
-      // Default tag selection is now "All"
-      await setSelectedTag("All");
-      
       _state = HomeState.loaded;
+      notifyListeners();
+
+      // 2. Load background data without awaiting
+      // This reduces pressure on initial load and populates other tabs/sections asynchronously
+      _fetchTags(); 
+      _fetchForYou();
+      _fetchDeals();
+      
     } catch (e) {
       _errorMessage = 'An error occurred during initialization: $e';
       _state = HomeState.error;
@@ -133,6 +139,7 @@ class HomeProvider extends ChangeNotifier {
       final response = await _api.homeApi.getProductsTags();
       if (response.success && response.data != null) {
         _tags = response.data!;
+        notifyListeners();
       }
     } catch (e) {
       debugPrint("⚠️ Error fetching tags: $e");

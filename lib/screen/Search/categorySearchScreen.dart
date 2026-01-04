@@ -67,7 +67,7 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
                       context.push('/wishlist');
                     }
                   },
-                  child: Icon(Icons.favorite_border_outlined,
+                  child: const Icon(Icons.favorite_border_outlined,
                       size: 26, color: AppColors.black),
                 ),
               ],

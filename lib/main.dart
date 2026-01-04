@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/constants/routes.dart';
@@ -13,11 +14,17 @@ import 'package:shein_kosova/provider/category_provider.dart';
 import 'package:shein_kosova/provider/orders_provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
+import 'package:shein_kosova/services/notification_service.dart';
 import 'package:shein_kosova/utils/theam.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
+  // Initialize Firebase
+  await Firebase.initializeApp();
+  
+  // Initialize Notifications
+  await NotificationService().init();
 
   runApp(
     MultiProvider(
