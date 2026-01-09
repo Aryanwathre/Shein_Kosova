@@ -86,12 +86,33 @@ class NotificationService {
     if (initialMessage != null) {
       _handleNotificationTap(initialMessage.data['path']);
     }
+
+    // Get and save initial token
+    await refreshAndSaveToken();
+  }
+
+  Future<void> refreshAndSaveToken() async {
+    try {
+      String? token = await getToken();
+      if (token != null) {
+        debugPrint("Initial FCM Token: $token");
+        await _saveTokenToBackend(token);
+        await saveUserToFirestore(token: token);
+      }
+    } catch (e) {
+      debugPrint("Error in refreshAndSaveToken: $e");
+    }
   }
 
   Future<String?> getToken() async {
     try {
       if (Platform.isIOS) {
         String? apnsToken = await _fcm.getAPNSToken();
+        if (apnsToken == null) {
+          // Wait for APNS token if not immediately available
+          await Future.delayed(const Duration(seconds: 2));
+          apnsToken = await _fcm.getAPNSToken();
+        }
         if (apnsToken == null) return null;
       }
       return await _fcm.getToken();
@@ -157,6 +178,7 @@ class NotificationService {
   void _handleNotificationTap(String? path) {
     if (path != null && path.isNotEmpty) {
       debugPrint("Navigating to: $path");
+      // You can implement custom navigation logic here if needed
     }
   }
 
@@ -164,6 +186,7 @@ class NotificationService {
     bool loggedIn = await ApiServiceManager().isUserLoggedIn();
     if (loggedIn) {
       debugPrint("Saving FCM token to backend: $token");
+      // TODO: Implement actual backend call if required
     }
   }
 }

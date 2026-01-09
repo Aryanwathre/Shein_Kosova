@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shein_kosova/services/api_service.dart';
+import 'package:shein_kosova/services/notification_service.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 enum AuthState {
@@ -27,11 +28,14 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> initializeAuth(BuildContext context) async {
     try {
-      final isLoggedIn = await _apiManager.isUserLoggedIn();
+      // Ensure we have a valid token (refreshes if possible)
+      final hasValidToken = await ensureValidToken();
 
-      if (isLoggedIn) {
+      if (hasValidToken) {
         _currentUser = await _apiManager.getCurrentUser();
         _setState(AuthState.authenticated);
+        // Refresh FCM token on initialization if logged in
+        NotificationService().refreshAndSaveToken();
       } else {
         _setState(AuthState.unauthenticated);
       }
@@ -57,6 +61,10 @@ class AuthProvider extends ChangeNotifier {
         _currentUser = response.data;
         _setState(AuthState.authenticated);
         _clearError();
+        
+        // Save FCM token after successful login
+        NotificationService().refreshAndSaveToken();
+        
         return true;
       } else {
         _setError(response.error ?? 'Login failed');
@@ -91,6 +99,9 @@ class AuthProvider extends ChangeNotifier {
         _setState(AuthState.authenticated);
         _clearError();
 
+        // Save FCM token after successful registration
+        NotificationService().refreshAndSaveToken();
+
         if (context.mounted) {
            Navigator.pop(context, true);
         }
@@ -106,7 +117,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> ensureValidToken() async {
-    if (!await TokenManager.isTokenValid()) {
+    final tokenData = await TokenManager.getTokenData();
+    if (tokenData == null) return false;
+    
+    if (tokenData.isExpired) {
       return await TokenManager.forceRefreshToken();
     }
     return true;
