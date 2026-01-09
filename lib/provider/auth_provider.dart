@@ -40,7 +40,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-
   // Login
   Future<bool> login({
     required String email,
@@ -91,8 +90,9 @@ class AuthProvider extends ChangeNotifier {
         _currentUser = response.data;
         _setState(AuthState.authenticated);
         _clearError();
+
         if (context.mounted) {
-           Navigator.pop(context, true); // Pop if it was a modal register
+           Navigator.pop(context, true);
         }
         return true;
       } else {
@@ -111,7 +111,6 @@ class AuthProvider extends ChangeNotifier {
     }
     return true;
   }
-
 
   // Logout
   Future<void> logout(BuildContext context) async {
@@ -134,7 +133,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Helper methods
   void _setState(AuthState newState) {
     _state = newState;
     notifyListeners();
@@ -143,15 +141,9 @@ class AuthProvider extends ChangeNotifier {
   void _setError(String error) {
     _errorMessage = error;
     _setState(AuthState.error);
-    debugPrint("AuthProvider Error: $error");
   }
 
   void _clearError() {
     _errorMessage = null;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }

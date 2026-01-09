@@ -12,7 +12,7 @@ class AboutUsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            Text("S kosova", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text("SH Kosova", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Text("We are your trusted fashion e-commerce platform bringing the latest trends "
                 "at affordable prices. Our goal is to make fashion accessible for everyone."),

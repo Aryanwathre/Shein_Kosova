@@ -1,12 +1,14 @@
 class BannerModel {
   final int id;
-  final String imageUrl;
+  final String webImageUrl;
+  final String mobileImageUrl;
   final String redirectUrl;
   final int displayOrder;
 
   BannerModel({
     required this.id,
-    required this.imageUrl,
+    required this.webImageUrl,
+    required this.mobileImageUrl,
     required this.redirectUrl,
     required this.displayOrder,
   });
@@ -14,7 +16,8 @@ class BannerModel {
   factory BannerModel.fromJson(Map<String, dynamic> json) {
     return BannerModel(
       id: json['id'] ?? 0,
-      imageUrl: json['imageUrl'] ?? '',
+      webImageUrl: json['webImageUrl'] ?? '',
+      mobileImageUrl: json['mobileImageUrl'] ?? '',
       redirectUrl: json['redirectUrl'] ?? '',
       displayOrder: json['displayOrder'] ?? 0,
     );

@@ -5,14 +5,13 @@ import 'package:shein_kosova/models/BannerModel.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 Widget buildCarouselSlider(
-    List<BannerModel> banners,
-    BuildContext context,
-    ) {
-
+  List<BannerModel> banners,
+  BuildContext context,
+) {
   return RepaintBoundary(
     child: CarouselSlider(
       options: CarouselOptions(
-        aspectRatio: 4/5,
+        aspectRatio: 4 / 5,
         viewportFraction: 1.0,
         autoPlay: true,
         autoPlayInterval: const Duration(seconds: 5),
@@ -23,15 +22,16 @@ Widget buildCarouselSlider(
       items: banners.map((banner) {
         return GestureDetector(
           onTap: () {
-            debugPrint("Clicked Banner: ${banner.imageUrl}");
+            debugPrint("Clicked Banner: ${banner.redirectUrl}");
           },
           child: SizedBox(
             width: double.infinity,
             child: CachedNetworkImage(
               alignment: Alignment.bottomCenter,
               fit: BoxFit.fitWidth,
-              imageUrl: banner.imageUrl,
-              placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
+              imageUrl: banner.mobileImageUrl,
+              placeholder: (context, url) =>
+                  const ShimmerWidget.rectangular(height: double.infinity),
               errorWidget: (context, url, error) => Container(
                 color: Colors.grey[300],
                 child: const Icon(Icons.broken_image, size: 50),

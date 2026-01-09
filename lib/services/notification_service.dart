@@ -1,7 +1,9 @@
 import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shein_kosova/services/api_service.dart';
 
 class NotificationService {
@@ -10,10 +12,11 @@ class NotificationService {
   NotificationService._internal();
 
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    // Request permissions for iOS
+    // Request permissions
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -38,7 +41,6 @@ class NotificationService {
     await _localNotifications.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap
         _handleNotificationTap(response.payload);
       },
     );
@@ -57,16 +59,11 @@ class NotificationService {
           ?.createNotificationChannel(channel);
     }
 
-    // Get FCM Token
-    String? token = await _fcm.getToken();
-    debugPrint("FCM Token: $token");
-    if (token != null) {
-      await _saveTokenToBackend(token);
-    }
-
     // Listen for token refresh
-    _fcm.onTokenRefresh.listen((newToken) {
-      _saveTokenToBackend(newToken);
+    _fcm.onTokenRefresh.listen((newToken) async {
+      debugPrint("FCM Token Refreshed: $newToken");
+      await _saveTokenToBackend(newToken);
+      await saveUserToFirestore(token: newToken);
     });
 
     // Handle background messages
@@ -74,11 +71,7 @@ class NotificationService {
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
       if (message.notification != null) {
-        debugPrint('Message also contained a notification: ${message.notification?.title}');
         _showLocalNotification(message);
       }
     });
@@ -95,6 +88,52 @@ class NotificationService {
     }
   }
 
+  Future<String?> getToken() async {
+    try {
+      if (Platform.isIOS) {
+        String? apnsToken = await _fcm.getAPNSToken();
+        if (apnsToken == null) return null;
+      }
+      return await _fcm.getToken();
+    } catch (e) {
+      debugPrint("Error getting FCM token: $e");
+      return null;
+    }
+  }
+
+  Future<void> saveUserToFirestore({
+    required String token,
+    Map<String, dynamic>? additionalData,
+  }) async {
+    try {
+      final userData = await ApiServiceManager().getCurrentUser();
+      String? userId;
+
+      if (userData != null && userData['id'] != null) {
+        userId = userData['id'].toString();
+      } else if (additionalData != null && additionalData['id'] != null) {
+        userId = additionalData['id'].toString();
+      }
+
+      if (userId != null) {
+        final dataToSave = {
+          'fcmToken': token,
+          'lastUpdated': FieldValue.serverTimestamp(),
+          'platform': Platform.isIOS ? 'iOS' : 'Android',
+          if (additionalData != null) ...additionalData,
+        };
+
+        await _firestore.collection('users').doc(userId).set(
+              dataToSave,
+              SetOptions(merge: true),
+            );
+        debugPrint("User data and FCM Token saved to Firestore for user: $userId");
+      }
+    } catch (e) {
+      debugPrint("Error saving user data to Firestore: $e");
+    }
+  }
+
   Future<void> _showLocalNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -102,7 +141,6 @@ class NotificationService {
       'High Importance Notifications',
       importance: Importance.max,
       priority: Priority.high,
-      showWhen: true,
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
@@ -118,29 +156,19 @@ class NotificationService {
 
   void _handleNotificationTap(String? path) {
     if (path != null && path.isNotEmpty) {
-      // Use a global key or a navigation service to navigate
-      // Example: AppRoutes.router.push(path);
       debugPrint("Navigating to: $path");
     }
   }
 
   Future<void> _saveTokenToBackend(String token) async {
-    // Check if user is logged in
     bool loggedIn = await ApiServiceManager().isUserLoggedIn();
     if (loggedIn) {
-      try {
-        // You should add an endpoint in your backend to save the FCM token
-        // for the current user. 
-        // Example: await ApiServiceManager().profileApi.updateFCMToken(token);
-        debugPrint("Saving FCM token to backend: $token");
-      } catch (e) {
-        debugPrint("Error saving FCM token: $e");
-      }
+      debugPrint("Saving FCM token to backend: $token");
     }
   }
 }
 
-// Background handler must be a top-level function
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint("Handling a background message: ${message.messageId}");
 }

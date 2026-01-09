@@ -74,7 +74,6 @@ class AppRoutes {
         builder: (context, state) {
           final product = state.extra as ProductModel?;
           final id = state.pathParameters['id'];
-          // Even if product is null, the screen handles loading by ID if needed.
           return ProductDetailsScreen(product: product);
         },
       ),

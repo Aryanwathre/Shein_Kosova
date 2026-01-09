@@ -42,19 +42,24 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
     }
   }
 
-
   Future<void> _navigateToNextScreen() async {
     context.go('/shop');
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Image.asset("assets/logo3.png", height: 150, width: 150),
+        child: Text(
+          "SH Kosova",
+          style: GoogleFonts.outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
   }
@@ -70,7 +75,6 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> {
   late List<Widget> _pages;
-
 
   @override
   void initState() {
@@ -129,7 +133,7 @@ class _LandingPageState extends State<LandingPage> {
 
                 if (requiresAuth && authProvider.state != AuthState.authenticated) {
                   await showLoginPrompt(context);
-                  
+
                   // After the prompt (and potential login), check state again
                   if (authProvider.state != AuthState.authenticated) return;
 
@@ -144,7 +148,6 @@ class _LandingPageState extends State<LandingPage> {
                 // We navigate via GoRouter to keep the URL/state in sync
                 context.go('/shop?index=$index');
               },
-
               items: [
                 BottomNavigationBarItem(
                   icon: (selectedIndex == 0)
