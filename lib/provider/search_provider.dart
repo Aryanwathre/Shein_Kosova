@@ -24,6 +24,7 @@ class SearchProvider extends ChangeNotifier {
   String? _errorMessage;
   Timer? _debounce;
   String? _selectedSize;
+  String? _selectedColor;
   int _quantity = 1;
 
 
@@ -72,6 +73,7 @@ class SearchProvider extends ChangeNotifier {
   String? get sortDir => _sortDir;
 
   String? get selectedSize => _selectedSize;
+  String? get selectedColor => _selectedColor;
   int get quantity => _quantity;
   List<CartItem> get cart => _cart;
 
@@ -125,6 +127,7 @@ class SearchProvider extends ChangeNotifier {
 
       if (response.success && response.data != null) {
         selectedProductDetails = ProductModel.fromJson(response.data!);
+        _selectedColor = selectedProductDetails?.colors;
       }
     } catch (e) {
       debugPrint("❌ Error fetching product details: $e");
@@ -148,6 +151,7 @@ class SearchProvider extends ChangeNotifier {
     String? sortBy,
     String? sortDir,
     String? sizeRange,
+    String? color,
   }) {
     _query = query ?? _query;
     _minPrice = minPrice ?? _minPrice;
@@ -157,6 +161,7 @@ class SearchProvider extends ChangeNotifier {
     _size = size ?? _size;
     _categoryId = categoryId ?? _categoryId;
     _selectedSize = sizeRange ?? _selectedSize;
+    _selectedColor = color ?? _selectedColor;
 
     _mapSortKey();
 
@@ -202,7 +207,7 @@ class SearchProvider extends ChangeNotifier {
         sortBy: _sortBy,
         sortDir: _sortDir,
         sizeRange: _selectedSize,
-
+        color: _selectedColor,
       );
 
       if (response.success && response.data != null) {
@@ -271,6 +276,23 @@ class SearchProvider extends ChangeNotifier {
     return [];
   }
 
+  // ============================
+  // FETCH COLORS FROM API
+  // ============================
+  Future<List<String>> fetchColors() async {
+    try {
+      final response = await _api.colorsApi.getAvailableColors();
+
+      if (response.success && response.data != null) {
+        final List<dynamic> raw = response.data!;
+        return raw.map((e) => e.toString()).toList();
+      }
+    } catch (e) {
+      debugPrint("❌ fetchColors() Error: $e");
+    }
+    return [];
+  }
+
 
   void clearFilters({bool keepCategoryId = false, bool keepQuery = false}) {
     if (!keepQuery) _query = '';
@@ -280,6 +302,7 @@ class SearchProvider extends ChangeNotifier {
     _maxPrice = null;
     _minRating = 0.0;
     _selectedSize = null;
+    _selectedColor = null;
 
     _sortKey = "relevance";
     _mapSortKey();
@@ -412,6 +435,11 @@ class SearchProvider extends ChangeNotifier {
   // ============================
   void setSelectedSize(String size) {
     _selectedSize = size;
+    notifyListeners();
+  }
+
+  void setSelectedColor(String color) {
+    _selectedColor = color;
     notifyListeners();
   }
 

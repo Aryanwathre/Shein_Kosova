@@ -28,6 +28,8 @@ class _HomescreenState extends State<Homescreen>
   Color _appBarColor = Colors.transparent;
   Color _iconColor = Colors.white;
   Color _tabLabelColor = Colors.white;
+  bool _isScrolled = false;
+  bool _isBannerLight = false;
 
   @override
   void initState() {
@@ -57,22 +59,38 @@ class _HomescreenState extends State<Homescreen>
 
   void _handleScroll() {
     if (_scrollController.offset > 150) {
-      if (_appBarColor != Colors.white) {
+      if (!_isScrolled) {
         setState(() {
+          _isScrolled = true;
           _appBarColor = Colors.white;
           _iconColor = Colors.black;
           _tabLabelColor = Colors.black;
         });
       }
     } else {
-      if (_appBarColor != Colors.transparent) {
+      if (_isScrolled) {
         setState(() {
+          _isScrolled = false;
           _appBarColor = Colors.transparent;
-          _iconColor = Colors.white;
-          _tabLabelColor = Colors.white;
+          _updateHeaderColors(_isBannerLight);
         });
       }
     }
+  }
+
+  void _updateHeaderColors(bool isLight) {
+    _isBannerLight = isLight;
+    if (_isScrolled) return;
+
+    setState(() {
+      if (isLight) {
+        _iconColor = Colors.black;
+        _tabLabelColor = Colors.black;
+      } else {
+        _iconColor = Colors.white;
+        _tabLabelColor = Colors.white;
+      }
+    });
   }
 
   void _handleTabChange() {
@@ -117,6 +135,13 @@ class _HomescreenState extends State<Homescreen>
         }
 
         final categories = homeProvider.categories;
+        final banners = homeProvider.banners;
+        final bool hasBanners = banners.isNotEmpty;
+
+        // Determine effective colors based on whether banners are present
+        final Color effectiveAppBarColor = hasBanners ? _appBarColor : Colors.white;
+        final Color effectiveIconColor = hasBanners ? _iconColor : Colors.black;
+        final Color effectiveTabLabelColor = hasBanners ? _tabLabelColor : Colors.black;
 
         return Scaffold(
           body: NestedScrollView(
@@ -126,53 +151,81 @@ class _HomescreenState extends State<Homescreen>
                 SliverAppBar(
                   automaticallyImplyLeading: false,
                   pinned: true,
-                  expandedHeight: MediaQuery.of(context).size.width * 0.6,
-                  backgroundColor: _appBarColor,
+                  expandedHeight: hasBanners ? MediaQuery.of(context).size.width * 0.6 : 100,
+                  backgroundColor: effectiveAppBarColor,
                   elevation: 0,
                   toolbarHeight: 100,
-                  stretch: true,
-                  flexibleSpace: FlexibleSpaceBar(
+                  stretch: hasBanners,
+                  flexibleSpace: hasBanners ? FlexibleSpaceBar(
                     background: buildCarouselSlider(
-                      homeProvider.banners,
+                      banners,
                       context,
+                      onThemeChanged: (isLight) => _updateHeaderColors(isLight),
                     ),
-                  ),
+                  ) : null,
                   title: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 300),
-                    style: TextStyle(color: _iconColor),
+                    style: TextStyle(color: effectiveIconColor),
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            Icon(
-                              Icons.mail_outline_outlined,
-                              size: 24,
-                              color: _iconColor,
-                            ),
-                            const SizedBox(width: 10),
                             Expanded(
-                              child: BiteSearchBar(iconColor: _iconColor),
+                              child: BiteSearchBar(iconColor: effectiveIconColor),
                             ),
                             const SizedBox(width: 10),
-                            IconButton(
-                              icon: Icon(
-                                Icons.favorite_border_outlined,
-                                size: 26,
-                                color: _iconColor,
-                              ),
-                              onPressed: () async {
-                                final authProvider =
-                                    context.read<AuthProvider>();
-                                if (authProvider.state !=
-                                    AuthState.authenticated) {
-                                  await showLoginPrompt(context);
-                                  if (authProvider.state !=
-                                      AuthState.authenticated) return;
-                                }
+                            Consumer<WishlistProvider>(
+                              builder: (context, wishlistProvider, _) {
+                                final count = wishlistProvider.wishlistItems.length;
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.favorite_border_outlined,
+                                        size: 26,
+                                        color: effectiveIconColor,
+                                      ),
+                                      onPressed: () async {
+                                        final authProvider =
+                                            context.read<AuthProvider>();
+                                        if (authProvider.state !=
+                                            AuthState.authenticated) {
+                                          await showLoginPrompt(context);
+                                          if (authProvider.state !=
+                                              AuthState.authenticated) return;
+                                        }
+                                          context.push('/wishlist');
 
-                                if (mounted) {
-                                  context.push('/wishlist');
-                                }
+                                      },
+                                    ),
+                                    if (count > 0)
+                                      Positioned(
+                                        right: 5,
+                                        top: 5,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Text(
+                                            count.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
                               },
                             ),
                           ],
@@ -188,19 +241,19 @@ class _HomescreenState extends State<Homescreen>
                               horizontal: 8,
                               vertical: 0,
                             ),
-                            labelColor: _tabLabelColor,
+                            labelColor: effectiveTabLabelColor,
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.w700,
                             ),
-                            unselectedLabelColor: _tabLabelColor.withOpacity(
+                            unselectedLabelColor: effectiveTabLabelColor.withOpacity(
                               0.8,
                             ),
                             dividerColor: Colors.transparent,
-                            indicatorColor: Colors.white,
+                            indicatorColor: effectiveTabLabelColor,
                             indicator: UnderlineTabIndicator(
                               borderSide: BorderSide(
                                 width: 2.0,
-                                color: _tabLabelColor,
+                                color: effectiveTabLabelColor,
                               ),
                               insets: const EdgeInsets.fromLTRB(
                                 8.0,
@@ -298,7 +351,7 @@ class _HomeLandingView extends StatelessWidget {
                   final product = products[index];
                   return ProductCard(
                     onTap: () =>
-                        context.push('/product/${product.id}', extra: product),
+                        context.push('/products/${product.id}', extra: product),
                     context: context,
                     product: product,
                   );
@@ -490,7 +543,7 @@ class _CategoryProductsViewState extends State<_CategoryProductsView>
                     final product = products[index];
                     return ProductCard(
                       onTap: () =>
-                          context.push('/product/${product.id}', extra: product),
+                          context.push('/products/${product.id}', extra: product),
                       context: context,
                       product: product,
                     );
@@ -529,6 +582,7 @@ class _CategoryGrid extends StatelessWidget {
           }
           String categoryId = categories[index].id.toString();
           String categoryName = categories[index].name;
+          String categoryImage = categories[index].categoryImage ?? '';
           return GestureDetector(
             onTap: () {
               context.push(
@@ -541,7 +595,7 @@ class _CategoryGrid extends StatelessWidget {
                   height: 60,
                   width: 60,
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey[200],
+                    image: DecorationImage(image: NetworkImage(categoryImage)),
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
                   ),
                 ),

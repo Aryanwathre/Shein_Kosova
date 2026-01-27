@@ -388,6 +388,26 @@ class LoginUserApi extends BaseApi {
       },
     );
   }
+
+  Future<ApiResponse<Map<String, dynamic>>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    return makeRequest(
+      requireAuth: true,
+      request: (headers) => client.post(
+        Uri.parse('${AppConstants.appApiLink}auth/change-password'),
+        headers: headers,
+        body: jsonEncode({
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+          "confirmPassword": confirmPassword,
+        }),
+      ),
+      parser: (json) => json is Map<String, dynamic> ? json : {},
+    );
+  }
 }
 
 class AddressApi extends BaseApi {
@@ -514,7 +534,7 @@ class CategoriesApi extends BaseApi {
 class SearchApi extends BaseApi {
   Future<ApiResponse<Map<String, dynamic>>> searchProducts({
     String? query, String? categoryId, double? minPrice, double? maxPrice,
-    double? minRating, int? page, int? size, String? sortBy, String? sortDir, String? sizeRange,
+    double? minRating, int? page, int? size, String? sortBy, String? sortDir, String? sizeRange, String? color,
   }) async {
     return makeRequest(
       requireAuth: false,
@@ -530,6 +550,7 @@ class SearchApi extends BaseApi {
           if (sortBy != null) 'sortBy': sortBy,
           if (sortDir != null) 'sortDir': sortDir,
           if (sizeRange != null) 'product_size': sizeRange,
+          if (color != null) 'color': color,
         };
         final uri = Uri.parse('${AppConstants.appApiLink}products/search').replace(queryParameters: queryParams);
         return client.get(uri, headers: headers);
@@ -558,6 +579,16 @@ class SearchApi extends BaseApi {
       requireAuth: false,
       request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}search/popular'), headers: headers),
       parser: (json) => List<Map<String, dynamic>>.from(json['data'] ?? json ?? []),
+    );
+  }
+}
+
+class ColorsApi extends BaseApi {
+  Future<ApiResponse<List<String>>> getAvailableColors() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}color'), headers: headers),
+      parser: (json) => List<String>.from(json['data'] ?? json ?? []),
     );
   }
 }
@@ -817,6 +848,7 @@ class ApiServiceManager {
   final OrdersApi ordersApi = OrdersApi();
   final ReviewsApi reviewsApi = ReviewsApi();
   final SizesApi sizesApi = SizesApi();
+  final ColorsApi colorsApi = ColorsApi();
   final NotificationsApi notificationsApi = NotificationsApi();
   final HomeApi homeApi = HomeApi();
 

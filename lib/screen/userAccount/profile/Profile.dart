@@ -237,7 +237,7 @@ class _ProfileMenu extends StatelessWidget {
             icon: Icons.lock_outline,
             title: "Change Password",
             onTap: () {
-              // TODO: Navigate to Change Password Page
+              context.push('/change-password');
             }),
         const Divider(),
         _MenuTile(

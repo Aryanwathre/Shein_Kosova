@@ -122,7 +122,7 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
                 height: 60,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: Colors.blueGrey[200],
+                  image: DecorationImage(image: NetworkImage(category.categoryImage ?? '')),
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),

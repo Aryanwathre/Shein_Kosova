@@ -57,6 +57,7 @@ class CartProvider extends ChangeNotifier {
     required int productId,
     required int quantity,
     required String sizes,
+    String? color,
   }) async {
     _setState(CartState.updating);
     try {
@@ -64,6 +65,7 @@ class CartProvider extends ChangeNotifier {
         productId: productId,
         quantity: quantity,
         size: sizes,
+        color: color,
       );
 
       if (response.success) {

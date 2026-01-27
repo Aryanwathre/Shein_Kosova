@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
@@ -16,8 +17,9 @@ import '../../widgets/SearchBar.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final ProductModel? product;
+  final String? productId;
 
-  const ProductDetailsScreen({super.key, this.product});
+  const ProductDetailsScreen({super.key, this.product, this.productId});
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -26,6 +28,7 @@ class ProductDetailsScreen extends StatefulWidget {
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _quantity = 1;
   late ProductProvider _productProvider;
+  final TextEditingController _colorController = TextEditingController();
 
   @override
   void initState() {
@@ -44,6 +47,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           } else {
             productProvider.setProduct(widget.product!);
           }
+          
+          if (productProvider.product?.colors != null) {
+            _colorController.text = productProvider.product!.colors!;
+          }
 
           await wishlistProvider.loadWishlist();
 
@@ -51,6 +58,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             int.parse(widget.product!.category.id),
             widget.product!.id,
           );
+        } else if (widget.productId != null) {
+          await productProvider.getProductByID(int.parse(widget.productId!));
+          if (productProvider.product != null) {
+             if (productProvider.product?.colors != null) {
+               _colorController.text = productProvider.product!.colors!;
+             }
+             await productProvider.getProductByCode(
+               int.parse(productProvider.product!.category.id),
+               productProvider.product!.id,
+             );
+          }
+          await wishlistProvider.loadWishlist();
         }
       } finally {
         if (mounted) {
@@ -63,14 +82,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Save reference to provider to use it safely in dispose()
     _productProvider = Provider.of<ProductProvider>(context, listen: false);
   }
 
   @override
   void dispose() {
-    // Safe reset using the saved reference
     _productProvider.resetDetails();
+    _colorController.dispose();
     super.dispose();
   }
 
@@ -99,7 +117,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         }
 
         return Scaffold(
-          appBar: _buildAppBar(context),
+          appBar: _buildAppBar(context, product),
           body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,6 +125,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 _imageCarousel(context, product.detailImages),
                 _priceSection(context, product),
                 _productTitleSection(context, product),
+                _colorSection(context, product),
                 _variantOptions(context, product, provider),
                 _sizeOptions(context, product.sizes ?? []),
                 _quantitySelector(context),
@@ -125,7 +144,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, ProductModel product) {
     final cartProvider = context.watch<CartProvider>();
     return PreferredSize(
       preferredSize: const Size.fromHeight(90),
@@ -173,11 +192,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
               ],
             ),
-            IconButton(
-              icon: const Icon(Icons.share_outlined),
-              onPressed: () {
-                // Share implementation
-              },
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.share_outlined),
+                onPressed: () {
+                  final box = ctx.findRenderObject() as RenderBox;
+
+                  final String productUrl =
+                      'https://s-kosova.com/products/${product.id}';
+
+                  Share.share(
+                    'Check out this product on Shein Kosova: ${product.name}\n\n$productUrl',
+                    sharePositionOrigin:
+                    box.localToGlobal(Offset.zero) & box.size,
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -297,17 +327,46 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  Widget _colorSection(BuildContext context, ProductModel product) {
+    final bool isMulticolor = product.colors?.toLowerCase() == 'multicolor';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Color",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          if (isMulticolor)
+            TextField(
+              controller: _colorController,
+              decoration: InputDecoration(
+                hintText: "Enter color",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            )
+          else
+            Text(
+              product.colors ?? "N/A",
+              style: const TextStyle(fontSize: 15, color: Colors.black87),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _variantOptions(BuildContext context, ProductModel product, ProductProvider provider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Color: ${product.colors}",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
           if (product.variants != null && product.variants!.isNotEmpty)
             SizedBox(
               height: 100,
@@ -358,9 +417,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Select Size",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            Visibility(
+              visible: sizes.isNotEmpty,
+              child: const Text(
+                "Select Size",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -602,10 +664,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       return;
                     }
 
+                    final bool isMulticolor = product.colors?.toLowerCase() == 'multicolor';
+                    final colorInput = isMulticolor ? _colorController.text.trim() : product.colors ?? '';
+
+                    if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please specify a color for this product!')),
+                        );
+                      }
+                      return;
+                    }
+
                     final success = await cartProvider.addToCart(
                       productId: product.id,
                       quantity: _quantity,
                       sizes: provider.selectedSize!,
+                      color: colorInput,
                     );
 
                     if (context.mounted && success) {
@@ -796,7 +871,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   final product = productList[index];
                   return ProductCard(
                     onTap: () {
-                      context.push('/product/${product.id}', extra: product);
+                      context.push('/products/${product.id}', extra: product);
                     },
                     context: context,
                     product: product,

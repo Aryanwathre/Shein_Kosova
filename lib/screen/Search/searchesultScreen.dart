@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -306,6 +307,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           children: [
             _priceRangeSection(),
             _sizeSection(),
+            _colorSection(),
             _ratingSection(),
           ],
         ),
@@ -431,6 +433,48 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     );
   }
 
+  Widget _colorSection() {
+    return Consumer<SearchProvider>(
+      builder: (context, provider, child) {
+        return ExpansionTile(
+          initiallyExpanded: false,
+          title: const Text("Color", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          children: [
+            FutureBuilder<List<String>>(
+              future: provider.fetchColors(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+                final colors = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: colors.map((color) {
+                      final isSelected = provider.selectedColor == color;
+                      return GestureDetector(
+                        onTap: () => provider.setSelectedColor(color),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                          ),
+                          child: Text(color, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.w600, fontSize: 13)),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _ratingSection() {
     return Consumer<SearchProvider>(
       builder: (context, provider, child) {
@@ -501,14 +545,14 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                 final product = provider.searchResults[index];
                 if (_viewAsGrid) {
                   return ProductCard(
-                    onTap: () => context.push('/product/${product.id}', extra: product),
+                    onTap: () => context.push('/products/${product.id}', extra: product),
                     context: context,
                     product: product,
                     addToCart: () => _showQuickAdd(context, product),
                   );
                 } else {
                   return ProductListCard(
-                    onTap: () => context.push('/product/${product.id}', extra: product),
+                    onTap: () => context.push('/products/${product.id}', extra: product),
                     context: context,
                     product: product,
                     addToCart: () => _showQuickAdd(context, product),
@@ -524,6 +568,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   Future _showQuickAdd(BuildContext context, ProductModel product) {
     final provider = Provider.of<SearchProvider>(context, listen: false);
     provider.fetchProductDetails(product.id.toString());
+    final TextEditingController colorController = TextEditingController();
 
     return showModalBottomSheet(
       context: context,
@@ -550,6 +595,10 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             }
 
             final detail = provider.selectedProductDetails!;
+            if (colorController.text.isEmpty && detail.colors != null) {
+              colorController.text = detail.colors!;
+            }
+
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -565,7 +614,14 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(detail.mainImageUrl, height: 120, width: 90, fit: BoxFit.cover),
+                          child: CachedNetworkImage(
+                            imageUrl: detail.mainImageUrl, 
+                            height: 120, 
+                            width: 90, 
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 90),
+                            errorWidget: (context, url, error) => const Icon(Icons.error),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -605,6 +661,17 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                       ),
                       const SizedBox(height: 20),
                     ],
+                    const Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: colorController,
+                      decoration: InputDecoration(
+                        hintText: "Enter color",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         const Text("Quantity", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -637,9 +704,17 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                             return;
                           }
 
-                          context.read<CartProvider>().addToCart(productId: detail.id, quantity: provider.quantity, sizes: provider.selectedSize!);
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
+                          final success = await context.read<CartProvider>().addToCart(
+                            productId: detail.id, 
+                            quantity: provider.quantity, 
+                            sizes: provider.selectedSize!,
+                            color: colorController.text,
+                          );
+                          
+                          if (success) {
+                            if (context.mounted) Navigator.pop(context);
+                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
@@ -658,7 +733,10 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           },
         );
       },
-    );
+    ).then((_) {
+      colorController.dispose();
+      provider.resetQuantity();
+    });
   }
 }
 
@@ -698,11 +776,13 @@ class ProductListCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                product.mainImageUrl,
+              child: CachedNetworkImage(
+                imageUrl: product.mainImageUrl,
                 width: 100,
                 height: 100,
                 fit: BoxFit.cover,
+                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 100),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
             const SizedBox(width: 12),

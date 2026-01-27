@@ -2,8 +2,8 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
+import 'package:shein_kosova/provider/address_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
-import '../../../provider/address_provider.dart';
 
 class AddAddressScreen extends StatefulWidget {
   const AddAddressScreen({super.key});
@@ -160,24 +160,28 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                     decoration: BoxDecoration(
                       border: Border.all(color:   AppColors.border),
                     ),
-                    child: CountryCodePicker(
-                      padding: const EdgeInsets.all(0),
-                      onChanged: (country) {
-                        _contactCodeController.text = country.dialCode ?? "";
-                      },
-                      showCountryOnly: false,
-                      showOnlyCountryWhenClosed: false,
-                      alignLeft: false,
-                      showFlag: false,
-                      textStyle: TextStyle(
-                        color: AppColors.textNormal,
-                        fontSize: 12,
-                      ),
-                      flagWidth: 20,
-
-                      boxDecoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(6),
+                    child: Localizations.override(
+                      context: context,
+                      locale: const Locale('en'),
+                      child: CountryCodePicker(
+                        padding: const EdgeInsets.all(0),
+                        onChanged: (country) {
+                          _contactCodeController.text = country.dialCode ?? "";
+                        },
+                        showCountryOnly: false,
+                        showOnlyCountryWhenClosed: false,
+                        alignLeft: false,
+                        showFlag: false,
+                        textStyle: TextStyle(
+                          color: AppColors.textNormal,
+                          fontSize: 12,
+                        ),
+                        flagWidth: 20,
+                      
+                        boxDecoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                     ),
                   ),

@@ -6,6 +6,7 @@ class CartItem {
   final String image;
   final double price;
   final String size;
+  final String? color;
   int quantity;
   final double subtotal;
 
@@ -16,6 +17,7 @@ class CartItem {
     required this.image,
     required this.price,
     required this.size,
+    this.color,
     required this.quantity,
     required this.subtotal,
   });
@@ -28,6 +30,7 @@ class CartItem {
       image: json['mainImageUrl'] ?? '',
       price: (json['price'] as num? ?? 0.0).toDouble(),
       size: json['size'] ?? '',
+      color: json['color'],
       quantity: (json['quantity'] as num? ?? 0).toInt(),
       subtotal: (json['subtotal'] as num? ?? 0.0).toDouble(),
     );
@@ -41,6 +44,7 @@ class CartItem {
       'mainImageUrl': image,
       'price': price,
       'size' : size,
+      'color': color,
       'quantity': quantity,
       'subtotal': subtotal,
     };
@@ -48,6 +52,6 @@ class CartItem {
 
   @override
   String toString() {
-    return 'CartItem(id: $id, name: $name, quantity: $quantity, price: $price, size: $size)';
+    return 'CartItem(id: $id, name: $name, quantity: $quantity, price: $price, size: $size, color: $color)';
   }
 }

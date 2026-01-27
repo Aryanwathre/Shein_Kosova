@@ -17,6 +17,7 @@ import 'package:shein_kosova/screen/userAccount/Address/Addresses_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/AddAddress_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/EditAddress_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/profile/edit_profile_screen.dart';
+import 'package:shein_kosova/screen/userAccount/profile/change_password_screen.dart';
 import 'package:shein_kosova/models/UserProfile.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 import 'package:shein_kosova/screen/OrderConfirmation/checkout_page.dart';
@@ -28,7 +29,7 @@ class AppRoutes {
   static const String landing = '/shop';
   static const String login = '/login';
   static const String register = '/register';
-  static const String productDetails = '/product/:id';
+  static const String productDetails = '/products/:id';
   static const String searchResult = '/search-result';
   static const String wishlist = '/wishlist';
   static const String aboutUs = '/about-us';
@@ -40,6 +41,7 @@ class AppRoutes {
   static const String addAddress = '/add-address';
   static const String editAddress = '/edit-address';
   static const String editProfile = '/edit-profile';
+  static const String changePassword = '/change-password';
   static const String checkout = '/checkout';
   static const String orderPlacedSuccess = '/order-success';
   static const String search = '/search';
@@ -74,7 +76,7 @@ class AppRoutes {
         builder: (context, state) {
           final product = state.extra as ProductModel?;
           final id = state.pathParameters['id'];
-          return ProductDetailsScreen(product: product);
+          return ProductDetailsScreen(product: product, productId: id);
         },
       ),
       GoRoute(
@@ -138,6 +140,10 @@ class AppRoutes {
           final user = state.extra as UserProfile;
           return EditProfileScreen(user: user);
         },
+      ),
+      GoRoute(
+        path: changePassword,
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
       GoRoute(
         path: checkout,

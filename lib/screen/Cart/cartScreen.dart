@@ -147,7 +147,12 @@ class _CartItemTile extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(item.size),
+                  Text("Size: ${item.size}"),
+                  if (item.color != null && item.color!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text("Color: ${item.color}"),
+                    ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,

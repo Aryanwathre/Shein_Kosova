@@ -181,8 +181,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
            const SizedBox(height: 20),
 
 
-           _shippingOptions(),
-           const SizedBox(height: 20),
+           // _shippingOptions(),
+           // const SizedBox(height: 20),
 
 
            _paymentMethod(),
@@ -273,7 +273,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _boxDecoration(),
-      height: 220,
+      height: 260,
       width: double.infinity,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -291,6 +291,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -301,17 +302,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           fit: BoxFit.fitHeight,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                            "${item.price}€ x${item.quantity}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w700,
-                            ),
+                      const SizedBox(height: 6),
+                      Text(
+                          "Size: ${item.size}",
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      if (item.color != null && item.color!.isNotEmpty)
+                        Text(
+                          "Color: ${item.color}",
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
+                      const SizedBox(height: 2),
+                      Text(
+                          "${item.price}€ x${item.quantity}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                          ),
                       ),
                     ],
                   ),
@@ -386,33 +394,33 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 style: TextStyle(color: AppColors.textDark)),
           ),
 
-          RadioListTile(
-            value: "card",
-            groupValue: selectedPayment,
-            onChanged: (val) {
-              setState(() => selectedPayment = val.toString());
-            },
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                 Text("Credit / Debit Card", style: TextStyle(color: AppColors.textDark)),
-                SizedBox(
-                  height: 40,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: card.length,
-                      itemBuilder: (context, index){
-                      return SvgPicture.asset(card[index], height: 20, width: 20,);
-                      }
-                  ),
-                ),
-
-              ],
-            ),
-          ),
+          // RadioListTile(
+          //   value: "card",
+          //   groupValue: selectedPayment,
+          //   onChanged: (val) {
+          //     setState(() => selectedPayment = val.toString());
+          //   },
+          //   title: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     mainAxisAlignment: MainAxisAlignment.start,
+          //     children: [
+          //        Text("Credit / Debit Card", style: TextStyle(color: AppColors.textDark)),
+          //       SizedBox(
+          //         height: 40,
+          //         child: ListView.builder(
+          //           scrollDirection: Axis.horizontal,
+          //           physics: const NeverScrollableScrollPhysics(),
+          //             shrinkWrap: true,
+          //             itemCount: card.length,
+          //             itemBuilder: (context, index){
+          //             return SvgPicture.asset(card[index], height: 20, width: 20,);
+          //             }
+          //         ),
+          //       ),
+          //
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

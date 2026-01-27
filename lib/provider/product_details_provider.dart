@@ -14,7 +14,13 @@ class ProductProvider extends ChangeNotifier {
   ProductListState _listState = ProductListState.initial;
   String? _listErrorMessage;
   String _selectedSort = "Relevance";
-  bool isLoading = true;
+  bool _isLoading = false;
+
+  bool get isLoading => _isLoading;
+  set isLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
 
 
   List<ProductModel> get products => _filteredProducts;
@@ -73,25 +79,28 @@ class ProductProvider extends ChangeNotifier {
     _selectedImageIndex = 0;
     _quantity = 1;
     _selectedColor = product.colors;
-    _selectedSize = product.sizes!.isNotEmpty ? product.sizes!.first : null;
+    _selectedSize = product.sizes != null && product.sizes!.isNotEmpty ? product.sizes!.first : null;
     _isWishlisted = false; // Fetch real wishlist status from API if needed
     notifyListeners();
   }
 
   Future<void> getProductByID(int productId) async {
     _setListState(ProductListState.loading);
-    _product = ProductModel.object();
     notifyListeners();
     try{
       final responseBody = await _api.productsApi.getProductById(productId: productId.toString());
       if(responseBody.success && responseBody.data != null){
         final products = ProductModel.fromJson(responseBody.data!);
         _product = products;
+        _selectedColor = _product?.colors;
+        _selectedSize = _product?.sizes != null && _product!.sizes!.isNotEmpty ? _product!.sizes!.first : null;
         _setListState(ProductListState.loaded);
       } else {
+        _product = null;
         _setListError(responseBody.error ?? 'Product not found');
       }
     }catch (e) {
+      _product = null;
       _setListError('Network error: ${e.toString()}');
       debugPrint('⚠️ Exception: $e');
     }
@@ -221,7 +230,7 @@ class ProductProvider extends ChangeNotifier {
     _selectedSize = null;
     _selectedImageIndex = 0;
     _categoryProducts = [];
-    isLoading = true;
+    _isLoading = false;
 
     notifyListeners();
   }

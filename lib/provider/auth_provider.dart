@@ -126,6 +126,41 @@ class AuthProvider extends ChangeNotifier {
     return true;
   }
 
+  // Change Password
+  Future<ApiResponse<String>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      _setState(AuthState.loading);
+      final response = await _apiManager.loginApi.changePassword(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+
+      if (response.success) {
+        // Clear all session data on password change success
+        await _apiManager.logout();
+        _currentUser = null;
+        _setState(AuthState.unauthenticated);
+        _clearError();
+        
+        // The API returns a string message according to the user
+        final message = response.data is Map ? (response.data as Map)['message']?.toString() ?? 'Success' : response.data.toString();
+        return ApiResponse.success(message);
+      } else {
+        _setError(response.error ?? 'Failed to change password');
+        return ApiResponse.error(response.error ?? 'Failed to change password');
+      }
+    } catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      _setError(errorMsg);
+      return ApiResponse.error(errorMsg);
+    }
+  }
+
   // Logout
   Future<void> logout(BuildContext context) async {
     try {

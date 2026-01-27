@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shein_kosova/models/order_model.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -102,40 +104,70 @@ class OrderDetailsScreen extends StatelessWidget {
                 separatorBuilder: (_, __) => const Divider(height: 24),
                 itemBuilder: (context, index) {
                   final item = order.items[index];
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 70,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                  return GestureDetector(
+                    onTap: () {
+                      context.push('/products/${item.productId}');
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Icon(Icons.image, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.productName,
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                          child: CachedNetworkImage(
+                            imageUrl: item.productMainImageUrl,
+                            width: 70,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: 70,
+                              height: 90,
+                              color: Colors.grey[200],
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Qty: ${item.quantity}",
-                              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            errorWidget: (context, url, error) => Container(
+                              width: 70,
+                              height: 90,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
                             ),
-                            const SizedBox(height: 4),
-                            styledPrice(item.price, fontSize: 15),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.productName,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Size: ${item.size}",
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                              ),
+                              if (item.color.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    "Color: ${item.color}",
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                  ),
+                                ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Qty: ${item.quantity}",
+                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                              ),
+                              const SizedBox(height: 4),
+                              styledPrice(item.price, fontSize: 15),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),

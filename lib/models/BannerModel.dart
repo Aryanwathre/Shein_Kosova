@@ -4,6 +4,7 @@ class BannerModel {
   final String mobileImageUrl;
   final String redirectUrl;
   final int displayOrder;
+  final bool isLight; // Added to handle adaptive header icons
 
   BannerModel({
     required this.id,
@@ -11,6 +12,7 @@ class BannerModel {
     required this.mobileImageUrl,
     required this.redirectUrl,
     required this.displayOrder,
+    this.isLight = false,
   });
 
   factory BannerModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class BannerModel {
       mobileImageUrl: json['mobileImageUrl'] ?? '',
       redirectUrl: json['redirectUrl'] ?? '',
       displayOrder: json['displayOrder'] ?? 0,
+      isLight: json['isLight'] ?? false,
     );
   }
 }

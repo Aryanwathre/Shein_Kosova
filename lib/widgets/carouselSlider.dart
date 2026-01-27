@@ -6,8 +6,9 @@ import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 Widget buildCarouselSlider(
   List<BannerModel> banners,
-  BuildContext context,
-) {
+  BuildContext context, {
+  Function(bool)? onThemeChanged,
+}) {
   return RepaintBoundary(
     child: CarouselSlider(
       options: CarouselOptions(
@@ -18,6 +19,11 @@ Widget buildCarouselSlider(
         autoPlayAnimationDuration: const Duration(milliseconds: 800),
         enableInfiniteScroll: true,
         enlargeCenterPage: false,
+        onPageChanged: (index, reason) {
+          if (onThemeChanged != null && banners.isNotEmpty) {
+            onThemeChanged(banners[index].isLight);
+          }
+        },
       ),
       items: banners.map((banner) {
         return GestureDetector(

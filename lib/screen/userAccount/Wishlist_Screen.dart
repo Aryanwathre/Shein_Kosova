@@ -64,7 +64,7 @@ class WishlistScreen extends StatelessWidget {
                       onTap: () async {
                         final productProvider = context.read<ProductProvider>();
                         productProvider.isLoading = true;
-                        context.push('/product/${item.productId}');
+                        context.push('/products/${item.productId}');
                       },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
