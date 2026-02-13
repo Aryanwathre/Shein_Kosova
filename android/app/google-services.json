@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "486355060056",
+    "project_id": "student-food-takeaway",
+    "storage_bucket": "student-food-takeaway.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:486355060056:android:2dcdd808f1c40ff80e112d",
+        "android_client_info": {
+          "package_name": "com.example.student_food_takeaway"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJEkuaRVvyI-xULGpnW1KOK92p0tO9CwA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:486355060056:android:5fdb6520a011fb410e112d",
+        "android_client_info": {
+          "package_name": "com.shein_ks.sheinKosova"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJEkuaRVvyI-xULGpnW1KOK92p0tO9CwA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
