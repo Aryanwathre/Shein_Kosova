@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/ProductModel.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/ProductModel.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum ProductListState { initial, loading, loaded, error }
 

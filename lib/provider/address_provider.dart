@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/AddressModel.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/AddressModel.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum AddressState {
   initial,

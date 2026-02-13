@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shein_kosova/models/BannerModel.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/models/category_model.dart';
-import 'package:shein_kosova/models/BannerModel.dart';
 import 'package:shein_kosova/services/api_service.dart';
 
 enum HomeState { initial, loading, loaded, error }

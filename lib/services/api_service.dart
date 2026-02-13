@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../models/category_model.dart';
-import '../models/ReviewModel.dart';
-import '../models/order_model.dart';
+import 'package:shein_kosova/models/ReviewModel.dart';
+import 'package:shein_kosova/models/category_model.dart';
+import 'package:shein_kosova/models/order_model.dart';
 
 // ==================== CONSTANTS ====================
 class AppConstants {

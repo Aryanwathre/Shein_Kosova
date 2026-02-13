@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/UserProfile.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/UserProfile.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum ProfileState { initial, loading, loaded, error, updating }
 

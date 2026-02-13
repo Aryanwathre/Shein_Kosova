@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/wishlist_item_model.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/wishlist_item_model.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum WishlistState { initial, loading, loaded, error, updating }
 

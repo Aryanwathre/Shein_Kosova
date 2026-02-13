@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import '../models/order_model.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum CheckoutState { idle, loading, success, error }
 
