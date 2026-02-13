@@ -7,6 +7,25 @@ This document explains how to set up Firebase App Distribution for automated dep
 1. A Firebase project with Firebase App Distribution enabled
 2. An Android app registered in your Firebase project
 3. A service account with appropriate permissions
+4. Firebase configuration files properly set up
+
+## Firebase Configuration
+
+### Setting up firebase_options.dart
+
+The `lib/firebase_options.dart` file should be generated using the FlutterFire CLI:
+
+```bash
+# Install FlutterFire CLI if you haven't already
+dart pub global activate flutterfire_cli
+
+# Configure Firebase for your Flutter project
+flutterfire configure
+```
+
+This will generate the proper `firebase_options.dart` file with your actual Firebase project configuration.
+
+**Note:** A template `firebase_options.dart` file is included in the repository for testing purposes only. Replace it with your actual Firebase configuration before deployment.
 
 ## Required GitHub Secrets
 
