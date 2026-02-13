@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shein_kosova/models/ProductModel.dart';
+import 'package:shein_kosova/models/category_model.dart';
 import 'package:shein_kosova/services/api_service.dart';
-import '../models/category_model.dart';
-import '../models/ProductModel.dart';
 
 class CategoryProvider extends ChangeNotifier {
   // Category list
