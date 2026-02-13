@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/main.dart';
 import 'package:shein_kosova/provider/CheckoutProvider.dart';
 import 'package:shein_kosova/provider/LandingPageProvider.dart';
 import 'package:shein_kosova/provider/Profile_provider.dart';
@@ -20,8 +21,6 @@ import 'package:shein_kosova/provider/orders_provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
-
-import 'package:shein_kosova/main.dart';
 
 void main() {
   testWidgets('App builds without crashing', (WidgetTester tester) async {

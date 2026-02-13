@@ -1,5 +1,5 @@
 import 'package:shein_kosova/models/ReviewModel.dart';
-import 'category_model.dart';
+import 'package:shein_kosova/models/category_model.dart';
 
 class ProductModel {
   final int id;

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../models/AddressModel.dart';
-import '../models/CartItemModel.dart';
-import '../services/api_service.dart';
+import 'package:shein_kosova/models/AddressModel.dart';
+import 'package:shein_kosova/models/CartItemModel.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 class CheckoutProvider extends ChangeNotifier {
   final OrdersApi ordersApi = ApiServiceManager().ordersApi;

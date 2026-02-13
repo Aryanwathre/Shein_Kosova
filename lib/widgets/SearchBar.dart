@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
-import '../utils/AppColors.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 
 Widget buildSearchBar(BuildContext context) {
   return InkWell(

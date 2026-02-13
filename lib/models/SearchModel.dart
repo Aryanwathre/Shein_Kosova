@@ -1,4 +1,4 @@
-import 'ProductModel.dart';
+import 'package:shein_kosova/models/ProductModel.dart';
 
 class SearchResponseModel {
   final List<ProductModel> content;

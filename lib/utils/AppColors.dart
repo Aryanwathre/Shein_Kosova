@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/hex_color.dart';
+import 'package:shein_kosova/utils/hex_color.dart';
 
 class AppColors {
   // -------------------------
