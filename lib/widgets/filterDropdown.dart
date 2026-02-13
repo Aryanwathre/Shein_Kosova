@@ -32,7 +32,7 @@ class _FilterSectionState extends State<FilterSection> {
                   widget.lable,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.black),
                 ),
-                Icon(
+                const Icon(
                   _isExpanded
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.keyboard_arrow_down_rounded,

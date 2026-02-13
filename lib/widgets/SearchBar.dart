@@ -109,7 +109,7 @@ Widget buildSquareSearchBar(BuildContext context) {
             margin: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.005),
             width: MediaQuery.of(context).size.width * 0.12,
             height: MediaQuery.of(context).size.height * 0.035,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.black,
             ),
             child: const Icon(

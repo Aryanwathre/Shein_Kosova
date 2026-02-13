@@ -136,7 +136,7 @@ class _RatingsReviewsWidgetState extends State<RatingsReviewsWidget> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                 ],
               ),
             ),
