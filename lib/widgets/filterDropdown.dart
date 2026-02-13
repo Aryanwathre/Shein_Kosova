@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 
 class FilterSection extends StatefulWidget {
-  String lable;
-  List<String> productTypes;
-  FilterSection({super.key, required this.lable, required this.productTypes});
+  final String lable;
+  final List<String> productTypes;
+  const FilterSection({super.key, required this.lable, required this.productTypes});
 
   @override
   State<FilterSection> createState() => _FilterSectionState();
@@ -30,9 +30,9 @@ class _FilterSectionState extends State<FilterSection> {
               children: [
                 Text(
                   widget.lable,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.black),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.black),
                 ),
-                const Icon(
+                Icon(
                   _isExpanded
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.keyboard_arrow_down_rounded,

@@ -65,12 +65,8 @@ class OrdersProvider with ChangeNotifier {
     try {
       final response = await _ordersApi.getOrders();
 
-      print("🟢 RAW API RESPONSE: ${response.data}");
-
       if (response.success && response.data != null) {
         _orders = response.data!;  // 👈 Directly assign parsed List<OrderModel>
-
-        print("✅ Parsed Orders: $_orders");
 
         _clearError();
         _setState(CheckoutState.success);
