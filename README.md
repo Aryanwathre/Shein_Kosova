@@ -26,7 +26,7 @@ To enable Firebase App Distribution deployment, you need to configure GitHub sec
 
 ### Prerequisites
 
-- Flutter SDK (3.24.0 or later)
+- Flutter SDK (latest stable recommended, must include Dart SDK 3.8.1+)
 - Dart SDK (3.8.1 or later)
 - Java 17
 - Android Studio / Xcode (for mobile development)

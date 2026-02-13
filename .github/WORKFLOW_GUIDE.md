@@ -165,14 +165,16 @@ This is useful if you want to test the APK manually before deployment.
 ## Customization
 
 ### Change Flutter Version
-Edit `.github/workflows/flutter-ci-cd.yml`:
+The workflow uses the latest stable Flutter version by default. To pin to a specific version, edit `.github/workflows/flutter-ci-cd.yml`:
 ```yaml
 - name: Setup Flutter
   uses: subosito/flutter-action@v2
   with:
-    flutter-version: '3.24.0'  # Change this version
+    flutter-version: '3.24.0'  # Add this line to pin a specific version
     channel: 'stable'
 ```
+
+**Note**: Ensure the Flutter version you specify includes a Dart SDK version that meets the requirements in `pubspec.yaml` (currently ^3.8.1).
 
 ### Change Tester Groups
 Edit the deploy job in the workflow file:
