@@ -28,7 +28,8 @@ To enable Firebase App Distribution deployment, you need to configure GitHub sec
 
 - Flutter SDK (latest stable recommended, must include Dart SDK 3.8.1+)
 - Dart SDK (3.8.1 or later)
-- Java 17
+- Java 17 (for Android builds - configured in workflow and build.gradle.kts)
+- Kotlin (project uses Kotlin DSL for Android configuration)
 - Android Studio / Xcode (for mobile development)
 
 ### Getting Started
@@ -42,6 +43,17 @@ To enable Firebase App Distribution deployment, you need to configure GitHub sec
    ```bash
    flutter run
    ```
+
+### Android Configuration
+
+The Android project uses:
+- **Kotlin DSL** for Gradle build files (`.gradle.kts`)
+- **Java 17** for compilation (aligned with CI/CD workflow)
+- **Kotlin plugin** for Android development
+
+Build configuration files:
+- `android/build.gradle.kts` - Root project configuration
+- `android/app/build.gradle.kts` - App module configuration (Kotlin DSL)
 
 ### Running Tests
 
