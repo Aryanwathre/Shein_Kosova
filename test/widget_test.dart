@@ -7,24 +7,45 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:provider/provider.dart';
 import 'package:shein_kosova/main.dart';
+import 'package:shein_kosova/provider/CheckoutProvider.dart';
+import 'package:shein_kosova/provider/LandingPageProvider.dart';
+import 'package:shein_kosova/provider/Profile_provider.dart';
+import 'package:shein_kosova/provider/address_provider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/provider/category_provider.dart';
+import 'package:shein_kosova/provider/home_provider.dart';
+import 'package:shein_kosova/provider/orders_provider.dart';
+import 'package:shein_kosova/provider/product_details_provider.dart';
+import 'package:shein_kosova/provider/search_provider.dart';
+import 'package:shein_kosova/provider/wishlist_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App builds without crashing', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => CheckoutProvider()),
+          ChangeNotifierProvider(create: (_) => AddressProvider()),
+          ChangeNotifierProvider(create: (_) => LandingProvider()),
+          ChangeNotifierProvider(create: (_) => ProductProvider()),
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => CartProvider()),
+          ChangeNotifierProvider(create: (_) => CategoryProvider()),
+          ChangeNotifierProvider(create: (_) => SearchProvider()),
+          ChangeNotifierProvider(create: (_) => WishlistProvider()),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => OrdersProvider()),
+          ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the app builds successfully
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

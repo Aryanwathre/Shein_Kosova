@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/CartItemModel.dart'; // Ensure this path is correct
-import '../services/api_service.dart'; // Ensure this path is correct
+import 'package:shein_kosova/models/CartItemModel.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum CartState {
   initial,

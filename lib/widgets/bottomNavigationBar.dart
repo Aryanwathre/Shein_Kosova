@@ -1,20 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
+import 'package:shein_kosova/provider/LandingPageProvider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/screen/Cart/cartScreen.dart';
+import 'package:shein_kosova/screen/Home/homeScreen.dart';
+import 'package:shein_kosova/screen/Search/categorySearchScreen.dart';
 import 'package:shein_kosova/screen/userAccount/profile/Profile.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/theam.dart';
-
-import '../provider/auth_provider.dart';
-import '../provider/LandingPageProvider.dart';
-import '../provider/cart_provider.dart';
-import '../screen/Home/homeScreen.dart';
-import '../screen/Search/categorySearchScreen.dart';
-import 'login_prompt_sheet.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 
 class SplashScreenPage extends StatefulWidget {
   const SplashScreenPage({super.key});

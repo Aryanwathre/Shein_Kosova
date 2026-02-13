@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:shein_kosova/models/category_model.dart';
 import 'dart:async';
 
-import '../models/CartItemModel.dart';
-import '../models/ProductModel.dart';
-import '../models/SearchModel.dart';
-import '../services/api_service.dart';
+import 'package:flutter/material.dart';
+import 'package:shein_kosova/models/CartItemModel.dart';
+import 'package:shein_kosova/models/ProductModel.dart';
+import 'package:shein_kosova/models/SearchModel.dart';
+import 'package:shein_kosova/models/category_model.dart';
+import 'package:shein_kosova/services/api_service.dart';
 
 enum SearchState {
   initial,

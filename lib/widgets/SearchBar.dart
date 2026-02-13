@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
-import '../utils/AppColors.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 
 Widget buildSearchBar(BuildContext context) {
   return InkWell(
@@ -109,7 +109,7 @@ Widget buildSquareSearchBar(BuildContext context) {
             margin: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.005),
             width: MediaQuery.of(context).size.width * 0.12,
             height: MediaQuery.of(context).size.height * 0.035,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.black,
             ),
             child: const Icon(
