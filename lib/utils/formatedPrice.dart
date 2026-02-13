@@ -8,7 +8,7 @@ Widget styledPrice(double price, {Color? color,double fontSize = 18 }) {
 
   return Text.rich(
     TextSpan(
-      text: "${parts[0]}",
+      text: parts[0],
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.bold,

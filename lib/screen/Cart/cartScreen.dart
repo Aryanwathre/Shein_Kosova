@@ -1,13 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:input_quantity/input_quantity.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
+import 'package:shein_kosova/models/CartItemModel.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
-import '../../provider/cart_provider.dart';
-import '../../models/CartItemModel.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});

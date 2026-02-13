@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/UserProfile.dart';
-import '../../../provider/Profile_provider.dart';
-import '../../../widgets/custom_text_fields.dart';
+import 'package:shein_kosova/provider/Profile_provider.dart';
+import 'package:shein_kosova/widgets/custom_text_fields.dart';
 
 
 class EditProfileScreen extends StatefulWidget {

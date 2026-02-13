@@ -5,7 +5,7 @@ include: package:flutter_lints/flutter.yaml
 linter:
   rules:
     # STYLE LINTS
-    file_names: true
+    file_names: false # Disabled as per user request
     camel_case_types: true
     library_names: true
     non_constant_identifier_names: true
@@ -23,6 +23,7 @@ linter:
 analyzer:
   errors:
     must_be_immutable: ignore
+    deprecated_member_use: info
   exclude:
     - "build/**"
     - "**/*.g.dart"

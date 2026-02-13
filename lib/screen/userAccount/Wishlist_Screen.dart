@@ -1,11 +1,10 @@
-// screens/wishlist_screen.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/product_details_provider.dart';
+import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
-import '../../provider/wishlist_provider.dart';
-import '../../provider/product_details_provider.dart';
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});

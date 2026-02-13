@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/CheckoutProvider.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 
-import '../../provider/CheckoutProvider.dart';
-import '../../utils/AppColors.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -332,7 +331,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _shippingOptions() {
+  Widget shippingOptions() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _boxDecoration(),
@@ -343,6 +342,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
           RadioListTile(
             value: "standard",
+
             groupValue: selectedShipping,
             onChanged: (val) {
               setState(() => selectedShipping = val.toString());

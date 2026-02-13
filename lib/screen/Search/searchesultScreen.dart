@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
-
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
-import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
@@ -91,6 +89,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                 final authProvider = context.read<AuthProvider>();
                 if (authProvider.state != AuthState.authenticated) {
                   await showLoginPrompt(context);
+                  if (!mounted) return;
                   if (authProvider.state != AuthState.authenticated) return;
                 }
                 if (mounted) context.push('/wishlist');
@@ -134,6 +133,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           final authProvider = context.read<AuthProvider>();
           if (authProvider.state != AuthState.authenticated) {
             await showLoginPrompt(context);
+            if (!mounted) return;
             if (authProvider.state != AuthState.authenticated) return;
           }
           if (mounted) context.go('/shop?index=2');
@@ -241,7 +241,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     );
   }
 
-  Widget _filterChipsBar() {
+  Widget filterChipsBar() {
     return Container(
       height: 50,
       color: Colors.white,
@@ -696,11 +696,14 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                           final authProvider = context.read<AuthProvider>();
                           if (authProvider.state != AuthState.authenticated) {
                             await showLoginPrompt(context);
+                            if (!mounted) return;
                             if (authProvider.state != AuthState.authenticated) return;
                           }
 
                           if (provider.selectedSize == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
+                            }
                             return;
                           }
 
@@ -711,9 +714,11 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                             color: colorController.text,
                           );
                           
+                          if (!mounted) return;
+
                           if (success) {
-                            if (context.mounted) Navigator.pop(context);
-                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
                           }
                         },
                         style: ElevatedButton.styleFrom(

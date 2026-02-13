@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
-import '../../../widgets/custom_text_fields.dart';
+import 'package:shein_kosova/widgets/custom_text_fields.dart';
 
 class EditAddressScreen extends StatefulWidget {
   final AddressModel address;

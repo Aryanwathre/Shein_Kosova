@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../provider/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -27,7 +27,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSubmit(BuildContext context) async {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -38,18 +38,22 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       confirmPassword: _confirmPasswordController.text,
     );
 
-    if (mounted) {
-      if (response.success) {
+    if (!mounted) return;
+
+    final successMessage = 'Password changed successfully. Please login again.';
+    final errorMsg = response.error ?? 'Failed to change password';
+
+    if (response.success) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully. Please login again.')),
+          SnackBar(content: Text(successMessage)),
         );
-        
-        // Use pushReplacement to ensure the user can't go back to change password page
-        // And since changePassword calls logout, state will be unauthenticated
         context.go('/login');
-      } else {
+      }
+    } else {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.error ?? 'Failed to change password')),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -114,7 +118,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   return auth.isLoading
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
-                          onPressed: () => _handleSubmit(context),
+                          onPressed: () => _handleSubmit(),
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 50),
                           ),

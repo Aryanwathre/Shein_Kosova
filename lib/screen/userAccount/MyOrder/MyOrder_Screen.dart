@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/provider/orders_provider.dart';
+import 'package:shein_kosova/screen/userAccount/MyOrder/order_details_screen.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
-
-import '../../../models/order_model.dart';
-import '../../../provider/orders_provider.dart';
-import 'order_details_screen.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});

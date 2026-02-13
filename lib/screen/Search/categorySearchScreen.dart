@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
+import 'package:shein_kosova/widgets/SearchBar.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-import '../../widgets/SearchBar.dart';
-import '../../widgets/login_prompt_sheet.dart';
 
 class CargorySearchScreen extends StatefulWidget {
   const CargorySearchScreen({super.key});
@@ -60,6 +60,7 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
                     final authProvider = context.read<AuthProvider>();
                     if (authProvider.state != AuthState.authenticated) {
                       await showLoginPrompt(context);
+                      if (!mounted) return;
                       if (authProvider.state != AuthState.authenticated) return;
                     }
 

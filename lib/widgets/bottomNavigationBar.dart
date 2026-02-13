@@ -34,6 +34,8 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
 
     await Future.delayed(const Duration(seconds: 3));
 
+    if (!mounted) return;
+
     await authProvider.initializeAuth(context);
 
     if (mounted) {
@@ -42,7 +44,9 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
   }
 
   Future<void> _navigateToNextScreen() async {
-    context.go('/shop');
+    if (mounted) {
+      context.go('/shop');
+    }
   }
 
   @override
@@ -126,26 +130,27 @@ class _LandingPageState extends State<LandingPage> {
               type: BottomNavigationBarType.fixed,
               onTap: (index) async {
                 final authProvider = context.read<AuthProvider>();
-
-                // Cart (2) & Profile (3) need login
                 final requiresAuth = index == 2 || index == 3;
 
                 if (requiresAuth && authProvider.state != AuthState.authenticated) {
                   await showLoginPrompt(context);
+                  if (!mounted) return;
 
-                  // After the prompt (and potential login), check state again
-                  if (authProvider.state != AuthState.authenticated) return;
+                  // Re-read after async gap
+                  final updatedAuthProvider = context.read<AuthProvider>();
+                  if (updatedAuthProvider.state != AuthState.authenticated) return;
 
                   // Login successful → proceed
-                  if (index == 2) {
+                  if (index == 2 && mounted) {
                     // Refresh cart if moving to cart
-                    if (mounted) context.read<CartProvider>().loadCart();
+                    context.read<CartProvider>().loadCart();
                   }
                 }
 
-                // Instead of just calling context.read<LandingProvider>().changePage(index);
-                // We navigate via GoRouter to keep the URL/state in sync
-                context.go('/shop?index=$index');
+                // Navigate if still mounted
+                if (mounted) {
+                  context.go('/shop?index=$index');
+                }
               },
               items: [
                 BottomNavigationBarItem(

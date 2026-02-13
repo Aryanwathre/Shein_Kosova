@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/models/category_model.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/BiteClipper.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
+import 'package:shein_kosova/widgets/carouselSlider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-import '../../widgets/carouselSlider.dart';
-import '../../models/category_model.dart';
-import '../../widgets/login_prompt_sheet.dart';
-import '../../models/ProductModel.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -192,10 +191,15 @@ class _HomescreenState extends State<Homescreen>
                                         if (authProvider.state !=
                                             AuthState.authenticated) {
                                           await showLoginPrompt(context);
+                                          if (!mounted) return;
                                           if (authProvider.state !=
-                                              AuthState.authenticated) return;
+                                              AuthState.authenticated) {
+                                            return;
+                                          }
                                         }
+                                        if (mounted) {
                                           context.push('/wishlist');
+                                        }
 
                                       },
                                     ),
@@ -245,8 +249,8 @@ class _HomescreenState extends State<Homescreen>
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.w700,
                             ),
-                            unselectedLabelColor: effectiveTabLabelColor.withOpacity(
-                              0.8,
+                            unselectedLabelColor: effectiveTabLabelColor.withValues(
+                             alpha:  0.8,
                             ),
                             dividerColor: Colors.transparent,
                             indicatorColor: effectiveTabLabelColor,
@@ -412,10 +416,10 @@ class _TagSelector extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: isSelected
                         ? [
-                            BoxShadow(
+                            const BoxShadow(
                               color: Colors.black26,
                               blurRadius: 4,
-                              offset: const Offset(0, 2),
+                              offset: Offset(0, 2),
                             ),
                           ]
                         : null,

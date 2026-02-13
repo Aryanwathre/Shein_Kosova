@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/search_provider.dart';
+import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
+import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
-import '../../provider/search_provider.dart';
-import '../../widgets/SearchBar.dart';
-import '../ProductDetails/productDetails.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

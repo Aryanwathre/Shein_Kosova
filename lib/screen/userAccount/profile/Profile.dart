@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/Profile_provider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-import '../../../provider/Profile_provider.dart';
-import '../../../provider/auth_provider.dart'; // Import AuthProvider for logout
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

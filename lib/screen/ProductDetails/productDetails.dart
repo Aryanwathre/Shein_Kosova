@@ -1,19 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/widgets/FullScreenImageViewer.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
+import 'package:shein_kosova/widgets/RatingReviewsWidget.dart';
+import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
-import '../../models/ProductModel.dart';
-import '../../provider/product_details_provider.dart';
-import '../../provider/cart_provider.dart';
-import '../../widgets/FullScreenImageViewer.dart';
-import '../../widgets/RatingReviewsWidget.dart';
-import '../../widgets/SearchBar.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final ProductModel? product;
@@ -647,16 +647,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   final authProvider = context.read<AuthProvider>();
                   if (authProvider.state != AuthState.authenticated) {
                     await showLoginPrompt(context);
+                    if (!mounted) return;
                     if (authProvider.state != AuthState.authenticated) return;
                   }
 
                   final provider = context.read<ProductProvider>();
 
                   if (isInCart) {
-                    context.go('/shop?index=2');
+                    if (mounted) {
+                      context.go('/shop?index=2');
+                    }
                   } else {
                     if (provider.selectedSize == null) {
-                      if (context.mounted) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Please select a size!')),
                         );
@@ -668,7 +671,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     final colorInput = isMulticolor ? _colorController.text.trim() : product.colors ?? '';
 
                     if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
-                      if (context.mounted) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Please specify a color for this product!')),
                         );
@@ -683,7 +686,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       color: colorInput,
                     );
 
-                    if (context.mounted && success) {
+                    if (mounted && success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Added to Cart!')),
                       );
