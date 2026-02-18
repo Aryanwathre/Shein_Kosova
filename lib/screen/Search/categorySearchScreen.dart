@@ -123,7 +123,11 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
                 height: 60,
                 width: 60,
                 decoration: BoxDecoration(
-                  image: DecorationImage(image: NetworkImage(category.categoryImage ?? '')),
+                  image: DecorationImage(
+                    image: (category.categoryImage != null && category.categoryImage!.isNotEmpty)
+                        ? NetworkImage(category.categoryImage!) as ImageProvider
+                        : const AssetImage('assets/icon/default_category.png'),
+                  ),
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
