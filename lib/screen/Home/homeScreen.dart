@@ -599,7 +599,11 @@ class _CategoryGrid extends StatelessWidget {
                   height: 60,
                   width: 60,
                   decoration: BoxDecoration(
-                    image: DecorationImage(image: NetworkImage(categoryImage)),
+                    image: DecorationImage(
+                      image: categoryImage.isNotEmpty
+                          ? NetworkImage(categoryImage) as ImageProvider
+                          : const AssetImage('assets/icon/default_category.png'),
+                    ),
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
                   ),
                 ),
