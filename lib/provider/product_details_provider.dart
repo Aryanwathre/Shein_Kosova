@@ -79,7 +79,7 @@ class ProductProvider extends ChangeNotifier {
     _selectedImageIndex = 0;
     _quantity = 1;
     _selectedColor = product.colors;
-    _selectedSize = product.sizes != null && product.sizes!.isNotEmpty ? product.sizes!.first : null;
+    _selectedSize = null; // Don't pre-select size
     _isWishlisted = false; // Fetch real wishlist status from API if needed
     notifyListeners();
   }
@@ -93,7 +93,7 @@ class ProductProvider extends ChangeNotifier {
         final products = ProductModel.fromJson(responseBody.data!);
         _product = products;
         _selectedColor = _product?.colors;
-        _selectedSize = _product?.sizes != null && _product!.sizes!.isNotEmpty ? _product!.sizes!.first : null;
+        _selectedSize = null; // Don't pre-select size
         _setListState(ProductListState.loaded);
       } else {
         _product = null;

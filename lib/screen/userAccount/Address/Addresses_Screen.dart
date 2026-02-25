@@ -44,7 +44,31 @@ class _SavedAddressesPageState extends State<SavedAddressesPage> {
               );
             }
             if (provider.errorMessage != null && provider.addresses.isEmpty) {
-              return Center(child: Text(provider.errorMessage ?? 'An error occurred.'));
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load addresses',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.errorMessage ?? 'Something went wrong',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => provider.fetchAddresses(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
             }
             if (provider.isEmpty) {
               return Center(

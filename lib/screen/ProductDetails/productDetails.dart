@@ -255,13 +255,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       );
                     },
                     child: Container(
-                      color: Colors.black.withOpacity(0.05),
-                      child: CachedNetworkImage(
-                        imageUrl: images[index],
-                        fit: BoxFit.contain,
-                        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) => const Icon(Icons.error),
-                      ),
+                      color: Colors.black.withValues(alpha: 0.05),
+                      child: images[index].isEmpty
+                          ? const Center(
+                              child: Icon(Icons.broken_image, color: Colors.grey, size: 100),
+                            )
+                          : CachedNetworkImage(
+                              imageUrl: images[index],
+                              fit: BoxFit.contain,
+                              placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                              errorWidget: (context, url, error) => const Icon(Icons.error),
+                            ),
                     ),
                   ),
                 ),
@@ -272,7 +276,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -311,12 +315,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: CachedNetworkImage(
-                      imageUrl: images[index],
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                    ),
+                    child: images[index].isEmpty
+                        ? Container(
+                            width: 70,
+                            height: 70,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: images[index],
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
               ),
@@ -394,10 +405,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         padding: const EdgeInsets.all(4),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: variant.mainImageUrl,
-                            fit: BoxFit.cover,
-                          ),
+                          child: variant.mainImageUrl.isEmpty
+                              ? Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: variant.mainImageUrl,
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                       ),
                     ),
@@ -412,31 +428,39 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   Widget _sizeOptions(BuildContext context, List<String> sizes) {
     return Consumer<ProductProvider>(
-      builder: (context, provider, _) => Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Visibility(
-              visible: sizes.isNotEmpty,
-              child: const Text(
-                "Select Size",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      builder: (context, provider, _) {
+        // Filter out empty and whitespace-only sizes
+        final cleanedSizes = sizes
+            .where((size) => size.trim().isNotEmpty)
+            .map((size) => size.trim())
+            .toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Visibility(
+                visible: cleanedSizes.isNotEmpty,
+                child: const Text(
+                  "Select Size",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: sizes.map((size) => ChoiceChip(
-                label: Text(size),
-                selected: provider.selectedSize == size,
-                onSelected: (_) => provider.selectSize(size),
-              )).toList(),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: cleanedSizes.map((size) => ChoiceChip(
+                  label: Text(size),
+                  selected: provider.selectedSize == size,
+                  onSelected: (_) => provider.selectSize(size),
+                )).toList(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -601,7 +625,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         color: Theme.of(context).cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -658,37 +682,54 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       context.go('/shop?index=2');
                     }
                   } else {
-                    if (provider.selectedSize == null) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please select a size!')),
-                        );
-                      }
-                      return;
-                    }
+                    final cleanedSizes = (product.sizes ?? [])
+                        .where((size) => size.trim().isNotEmpty)
+                        .toList();
 
                     final bool isMulticolor = product.colors?.toLowerCase() == 'multicolor';
                     final colorInput = isMulticolor ? _colorController.text.trim() : product.colors ?? '';
 
-                    if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please specify a color for this product!')),
-                        );
+                    // If sizes are available, we MUST select one
+                    if (cleanedSizes.isNotEmpty) {
+                      if (provider.selectedSize == null) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select a size!')),
+                          );
+                        }
+                        return;
                       }
-                      return;
-                    }
-
+                      
+                      // Size is selected, now check multicolor requirement
+                      if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please specify a color for this product!')),
+                          );
+                        }
+                        return;
+                      }
+                    } 
+                    // If no sizes are available, we ignore the multicolor check and allow adding to cart
+                    
                     final success = await cartProvider.addToCart(
                       productId: product.id,
                       quantity: _quantity,
-                      sizes: provider.selectedSize!,
+                      sizes: provider.selectedSize ?? '',
                       color: colorInput,
                     );
 
-                    if (mounted && success) {
+                    if (!mounted) return;
+                    if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Added to Cart!')),
+                      );
+                    } else if (cartProvider.errorMessage != null) {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(cartProvider.errorMessage!),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }

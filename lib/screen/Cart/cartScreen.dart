@@ -48,9 +48,31 @@ class _CartScreenState extends State<CartScreen> {
             }
             if (state == CartState.error) {
               return Center(
-                child: Selector<CartProvider, String?>(
-                  selector: (_, provider) => provider.errorMessage,
-                  builder: (context, error, _) => Text(error ?? "An error occurred."),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load cart',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Selector<CartProvider, String?>(
+                      selector: (_, provider) => provider.errorMessage,
+                      builder: (context, error, _) => Text(
+                        error ?? "An error occurred while loading your cart",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => context.read<CartProvider>().loadCart(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
                 ),
               );
             }
@@ -75,25 +97,35 @@ class _CartItemsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<CartProvider, List<CartItem>>(
-      selector: (_, provider) => provider.items,
-      builder: (context, items, child) {
-        if (items.isEmpty) {
-          return const Center(
-            child: Text(
-              "Your cart is empty",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
+    return RefreshIndicator(
+      onRefresh: () => context.read<CartProvider>().loadCart(showLoading: false),
+      child: Selector<CartProvider, List<CartItem>>(
+        selector: (_, provider) => provider.items,
+        builder: (context, items, child) {
+          if (items.isEmpty) {
+            return const SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: 500,
+                child: Center(
+                  child: Text(
+                    "Your cart is empty",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+            );
+          }
+          return ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 90),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              return _CartItemTile(item: items[index]);
+            },
           );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 90),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return _CartItemTile(item: items[index]);
-          },
-        );
-      },
+        },
+      ),
     );
   }
 }
@@ -101,6 +133,31 @@ class _CartItemsList extends StatelessWidget {
 class _CartItemTile extends StatelessWidget {
   final CartItem item;
   const _CartItemTile({required this.item});
+
+  Future<void> _showDeleteConfirmation(BuildContext context, String cartItemId) async {
+    final provider = context.read<CartProvider>();
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Remove Item"),
+        content: Text("Are you sure you want to remove '${item.name}' from your cart?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              provider.removeFromCart(cartItemId);
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Remove"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,14 +172,21 @@ class _CartItemTile extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: CachedNetworkImage(
-                imageUrl: item.image,
-                height: 80,
-                width: 80,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 80, width: 80),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
+              child: item.image.isEmpty
+                  ? Container(
+                      height: 80,
+                      width: 80,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: item.image,
+                      height: 80,
+                      width: 80,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const ShimmerWidget.rectangular(height: 80, width: 80),
+                      errorWidget: (context, url, error) => const Icon(Icons.error),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -141,7 +205,7 @@ class _CartItemTile extends StatelessWidget {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => provider.removeFromCart(int.parse(item.id)),
+                        onTap: () => _showDeleteConfirmation(context, item.id.toString()),
                         child: const Icon(Icons.delete_outline, size: 22),
                       )
                     ],
@@ -172,9 +236,9 @@ class _CartItemTile extends StatelessWidget {
                         onQtyChanged: (value) {
                           if (value == null) return;
                           if (value <= 0) {
-                            provider.removeFromCart(int.parse(item.id));
+                            _showDeleteConfirmation(context, item.id.toString());
                           } else {
-                            provider.updateQuantity(int.parse(item.id), value);
+                            provider.updateQuantity(item.id.toString(), value);
                           }
                         },
                       ),

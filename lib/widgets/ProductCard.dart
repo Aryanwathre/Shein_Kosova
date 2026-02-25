@@ -42,16 +42,21 @@ class ProductCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                   child: AspectRatio(
                     aspectRatio: 0.72, // Slightly taller image area
-                    child: CachedNetworkImage(
-                      imageUrl: product.mainImageUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    ),
+                    child: product.mainImageUrl.isEmpty
+                        ? Container(
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: product.mainImageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
+                            errorWidget: (context, url, error) => Container(
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            ),
+                          ),
                   ),
                 ),
                 // Wishlist Icon
@@ -77,7 +82,7 @@ class ProductCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -186,19 +191,26 @@ class ProductListCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-              child: CachedNetworkImage(
-                imageUrl: product.mainImageUrl,
-                height: 100,
-                width: 80,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 80),
-                errorWidget: (context, url, error) => Container(
-                  height: 100,
-                  width: 80,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.broken_image, color: Colors.grey),
-                ),
-              ),
+              child: product.mainImageUrl.isEmpty
+                  ? Container(
+                      height: 100,
+                      width: 80,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: product.mainImageUrl,
+                      height: 100,
+                      width: 80,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 80),
+                      errorWidget: (context, url, error) => Container(
+                        height: 100,
+                        width: 80,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
+                    ),
             ),
             Expanded(
               child: Padding(

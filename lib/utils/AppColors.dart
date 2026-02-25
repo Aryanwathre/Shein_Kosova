@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shein_kosova/utils/hex_color.dart';
 
 class AppColors {
+  static String? _dynamicPrimaryHex;
+
+  static Future<void> loadConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    _dynamicPrimaryHex = prefs.getString('config_color');
+  }
+
   // -------------------------
   // Brand Colors
   // -------------------------
 
-  static final Color primary = HexColor("#FF7A00");          // Orange
-  static final Color primaryLight = HexColor("#FFA94D");     // Light Orange
-  static final Color primaryDark = HexColor("#E66A00");      // Dark Orange
+  static Color get primary => _dynamicPrimaryHex != null ? HexColor(_dynamicPrimaryHex!) : HexColor("#FF7A00");          // Orange
+  static Color get primaryLight => _dynamicPrimaryHex != null ? HexColor(_dynamicPrimaryHex!).withValues(alpha: 0.7) : HexColor("#FFA94D");     // Light Orange
+
+  // To darken a color properly without exceeding 1.0 opacity:
+  static Color get primaryDark {
+    if (_dynamicPrimaryHex != null) {
+      final color = HexColor(_dynamicPrimaryHex!);
+      final hsl = HSLColor.fromColor(color);
+      return hsl.withLightness((hsl.lightness - 0.1).clamp(0.0, 1.0)).toColor();
+    }
+    return HexColor("#E66A00"); // Dark Orange
+  }
 
   // -------------------------
   // Background Colors
@@ -39,7 +56,7 @@ class AppColors {
   // Icon Colors
   // -------------------------
 
-  static final Color iconPrimary = primary;                  // Orange (Primary)
+  static Color get iconPrimary => primary;                  // Orange (Primary)
   static final Color iconDark = HexColor("#212121");         // Dark Charcoal
   static final Color iconLight = HexColor("#757575");        // Gray
   static final Color iconWhite = HexColor("#FFFFFF");        // White
@@ -48,8 +65,8 @@ class AppColors {
   // Button Colors
   // -------------------------
 
-  static final Color buttonPrimary = primary;                // Orange
-  static final Color buttonSecondary = primaryLight;         // Light Orange
+  static Color get buttonPrimary => primary;                // Orange
+  static Color get buttonSecondary => primaryLight;         // Light Orange
 
   // -------------------------
   // Status Colors
@@ -63,8 +80,8 @@ class AppColors {
   // Effects / Shadows / Overlay
   // -------------------------
 
-  static final Color shadow = HexColor("#33FF7A00");         // Orange (20% opacity)
-  static final Color overlay = HexColor("#11FF7A00");        // Orange (7% opacity)
+  static Color get shadow => primary.withValues(alpha: 0.2);         // Orange (20% opacity)
+  static Color get overlay => primary.withValues(alpha: 0.07);        // Orange (7% opacity)
 
   // -------------------------
   // Card Background

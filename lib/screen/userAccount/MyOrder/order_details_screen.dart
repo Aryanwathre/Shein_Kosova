@@ -113,17 +113,24 @@ class OrderDetailsScreen extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: CachedNetworkImage(
-                            imageUrl: item.productMainImageUrl,
-                            width: 70,
-                            height: 90,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              width: 70,
-                              height: 90,
-                              color: Colors.grey[200],
-                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            ),
+                          child: item.productMainImageUrl.isEmpty
+                              ? Container(
+                                  width: 70,
+                                  height: 90,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: item.productMainImageUrl,
+                                  width: 70,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    width: 70,
+                                    height: 90,
+                                    color: Colors.grey[200],
+                                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                  ),
                             errorWidget: (context, url, error) => Container(
                               width: 70,
                               height: 90,
@@ -276,7 +283,7 @@ class OrderDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color),
       ),

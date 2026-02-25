@@ -128,7 +128,29 @@ class _HomescreenState extends State<Homescreen>
         if (homeProvider.state == HomeState.error) {
           return Scaffold(
             body: Center(
-              child: Text(homeProvider.errorMessage ?? "An error occurred"),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Something went wrong',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    homeProvider.errorMessage ?? 'Failed to load content',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => homeProvider.initHome(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -304,27 +326,49 @@ class _HomeLandingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        // Categories Grid (Showing all categories now)
-        SliverToBoxAdapter(
-          child: Consumer<HomeProvider>(
-            builder: (context, provider, _) =>
-                _CategoryGrid(categories: provider.categories),
+    return RefreshIndicator(
+      onRefresh: () async {
+        final homeProvider = context.read<HomeProvider>();
+        await homeProvider.initHome();
+      },
+      child: CustomScrollView(
+        slivers: [
+          // Categories Grid (Showing all categories now)
+          SliverToBoxAdapter(
+            child: Consumer<HomeProvider>(
+              builder: (context, provider, _) =>
+                  _CategoryGrid(categories: provider.categories),
+            ),
           ),
-        ),
-
-        // Horizontal Pill Tags (All, For You, Deals, Trending, etc.)
-        SliverToBoxAdapter(child: _TagSelector()),
-
-        // Product Grid based on selected Tag
-        Consumer<HomeProvider>(
-          builder: (context, provider, _) {
-            final selectedTag = provider.selectedTag;
-            final products = provider.getProductsForTag(selectedTag);
-            final isLoading = provider.isTagLoading(selectedTag);
-
-            if (isLoading) {
+      
+          // Horizontal Pill Tags (All, For You, Deals, Trending, etc.)
+          SliverToBoxAdapter(child: _TagSelector()),
+      
+          // Product Grid based on selected Tag
+          Consumer<HomeProvider>(
+            builder: (context, provider, _) {
+              final selectedTag = provider.selectedTag;
+              final products = provider.getProductsForTag(selectedTag);
+              final isLoading = provider.isTagLoading(selectedTag);
+      
+              if (isLoading) {
+                return SliverPadding(
+                  padding: const EdgeInsets.all(8),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.57,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const ProductCardShimmer(),
+                      childCount: 4,
+                    ),
+                  ),
+                );
+              }
+      
               return SliverPadding(
                 padding: const EdgeInsets.all(8),
                 sliver: SliverGrid(
@@ -334,37 +378,21 @@ class _HomeLandingView extends StatelessWidget {
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => const ProductCardShimmer(),
-                    childCount: 4,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = products[index];
+                    return ProductCard(
+                      onTap: () =>
+                          context.push('/products/${product.id}', extra: product),
+                      context: context,
+                      product: product,
+                    );
+                  }, childCount: products.length),
                 ),
               );
-            }
-
-            return SliverPadding(
-              padding: const EdgeInsets.all(8),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.57,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final product = products[index];
-                  return ProductCard(
-                    onTap: () =>
-                        context.push('/products/${product.id}', extra: product),
-                    context: context,
-                    product: product,
-                  );
-                }, childCount: products.length),
-              ),
-            );
-          },
-        ),
-      ],
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -386,6 +414,9 @@ class _TagSelector extends StatelessWidget {
 
         // Add tags from API (Deals, Trending, etc.)
         for (var tag in homeProvider.tags) {
+          // Skip empty or whitespace-only tags
+          if (tag.trim().isEmpty) continue;
+
           final formattedTag = tag[0].toUpperCase() + tag.substring(1);
           if (!availableTags.contains(formattedTag)) {
             availableTags.add(formattedTag);
@@ -599,9 +630,15 @@ class _CategoryGrid extends StatelessWidget {
                   height: 60,
                   width: 60,
                   decoration: BoxDecoration(
-                    image: DecorationImage(image: NetworkImage(categoryImage)),
+                    image: categoryImage.isNotEmpty
+                        ? DecorationImage(image: NetworkImage(categoryImage))
+                        : null,
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
+                    color: Colors.grey[200], // Fallback background color
                   ),
+                  child: categoryImage.isEmpty
+                      ? Icon(Icons.image_not_supported, color: Colors.grey[400])
+                      : null,
                 ),
                 const SizedBox(height: 5),
                 Text(

@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/constants/routes.dart';
@@ -10,6 +11,8 @@ import 'package:shein_kosova/provider/address_provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/provider/category_provider.dart';
+import 'package:shein_kosova/provider/config_provider.dart';
+import 'package:shein_kosova/provider/faq_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/provider/orders_provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
@@ -17,6 +20,7 @@ import 'package:shein_kosova/provider/search_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/services/api_service.dart';
 import 'package:shein_kosova/services/notification_service.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/theam.dart';
 
 void main() async {
@@ -25,6 +29,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Load local config for colors
+  await AppColors.loadConfig();
 
   // Initialize Notification Service
   final notificationService = NotificationService();
@@ -55,6 +62,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => ConfigProvider()),
+        ChangeNotifierProvider(create: (_) => FAQProvider()),
       ],
       child: const MyApp(),
     ),

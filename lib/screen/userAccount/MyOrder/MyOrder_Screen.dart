@@ -35,6 +35,32 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 150),
             )
+          : ordersProvider.state == CheckoutState.error
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to load orders',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    ordersProvider.errorMessage ?? 'Something went wrong',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => ordersProvider.getAllOrders(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
           : orders.isEmpty
           ? const Center(child: Text("No orders found"))
           : ListView.separated(

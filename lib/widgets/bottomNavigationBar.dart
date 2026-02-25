@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/LandingPageProvider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/provider/config_provider.dart';
+import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/screen/Cart/cartScreen.dart';
 import 'package:shein_kosova/screen/Home/homeScreen.dart';
 import 'package:shein_kosova/screen/Search/categorySearchScreen.dart';
@@ -26,16 +28,22 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // Delay initialization to after build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeApp();
+    });
   }
 
   Future<void> _initializeApp() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final configProvider = Provider.of<ConfigProvider>(context, listen: false);
 
-    await Future.delayed(const Duration(seconds: 3));
+    // Load config API first
+    await configProvider.loadConfig();
 
     if (!mounted) return;
 
+    // Then initialize auth
     await authProvider.initializeAuth(context);
 
     if (mounted) {
@@ -54,14 +62,48 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: Text(
-          "SH Kosova",
-          style: GoogleFonts.outfit(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            letterSpacing: 1.2,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              "SH Kosova",
+              style: GoogleFonts.outfit(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const Spacer(),
+            // Show loading indicator while config is being loaded
+            Align(
+              alignment:Alignment.bottomCenter,
+              child: Consumer<ConfigProvider>(
+                builder: (context, configProvider, child) {
+                  if (configProvider.state == ConfigState.loading) {
+                    return Column(
+                      children: [
+                        CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading configuration...',
+                          style: GoogleFonts.outfit(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -139,11 +181,17 @@ class _LandingPageState extends State<LandingPage> {
                   // Re-read after async gap
                   final updatedAuthProvider = context.read<AuthProvider>();
                   if (updatedAuthProvider.state != AuthState.authenticated) return;
+                }
 
-                  // Login successful → proceed
-                  if (index == 2 && mounted) {
-                    // Refresh cart if moving to cart
-                    context.read<CartProvider>().loadCart();
+                // --- FRESH DATA LOGIC ---
+                // Trigger background refresh when switching to a tab
+                if (mounted) {
+                  if (index == 0) {
+                    // Refresh home data silently
+                    context.read<HomeProvider>().initHome(forceRefresh: true);
+                  } else if (index == 2) {
+                    // Refresh cart
+                    context.read<CartProvider>().loadCart(showLoading: false);
                   }
                 }
 

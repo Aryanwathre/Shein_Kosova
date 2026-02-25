@@ -27,8 +27,6 @@ class CartProvider extends ChangeNotifier {
   int get itemCount => _items.length;
 
   double get totalAmount {
-    // --- FIX IS HERE ---
-    // Use the 'subtotal' from the API for the most accurate total.
     return _items.fold(0.0, (sum, item) => sum + item.subtotal);
   }
 
@@ -81,21 +79,17 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  // Use the unique cartItemId (which is an int in our model)
-  Future<bool> updateQuantity(int cartItemId, int newQuantity) async {
-    final index = _items.indexWhere((i) => i.id == cartItemId.toString());
+  Future<bool> updateQuantity(String cartItemId, int newQuantity) async {
+    final index = _items.indexWhere((i) => i.id == cartItemId);
     if (index == -1) return false;
 
-    // Save old quantity (in case we need rollback)
     final oldQuantity = _items[index].quantity;
-
-    // Optimistic update
     _items[index].quantity = newQuantity;
     notifyListeners();
 
     try {
       final response = await _api.cartApi.updateCartItem(
-        cartItemId: cartItemId.toString(),
+        cartItemId: cartItemId,
         quantity: newQuantity,
       );
 
@@ -103,28 +97,25 @@ class CartProvider extends ChangeNotifier {
         await loadCart(showLoading: false);
         return true;
       } else {
-        // Rollback
         _items[index].quantity = oldQuantity;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      // Rollback on network error
       _items[index].quantity = oldQuantity;
       notifyListeners();
       return false;
     }
   }
 
-  // Use the unique cartItemId (which is an int in our model)
-  Future<bool> removeFromCart(int cartItemId) async {
+  Future<bool> removeFromCart(String cartItemId) async {
     _setState(CartState.updating);
     try {
-      final response = await _api.cartApi.deleteCartItem(cartItemId: cartItemId.toString());
+      final response = await _api.cartApi.deleteCartItem(cartItemId: cartItemId);
       if (response.success) {
-        _items.removeWhere((item) => item.id == cartItemId.toString());
-        _setState(CartState.loaded);
-        notifyListeners(); // Manually notify after optimistic update
+        // Create a new list instead of modifying the existing one
+        _items = _items.where((item) => item.id != cartItemId).toList();
+        _setState(CartState.loaded); 
         return true;
       } else {
         _setError(response.error ?? 'Could not remove item');
@@ -141,7 +132,7 @@ class CartProvider extends ChangeNotifier {
     try {
       final response = await _api.cartApi.clearCart();
       if (response.success) {
-        _items.clear();
+        _items = []; // Create a new empty list
         _setState(CartState.loaded);
         return true;
       } else {
@@ -159,14 +150,14 @@ class CartProvider extends ChangeNotifier {
   Future<void> increaseQuantity(String cartItemId) async {
     final index = _items.indexWhere((item) => item.id == cartItemId);
     if (index != -1) {
-      await updateQuantity(int.parse(cartItemId), _items[index].quantity + 1);
+      await updateQuantity(cartItemId, _items[index].quantity + 1);
     }
   }
 
   Future<void> decreaseQuantity(String cartItemId) async {
     final index = _items.indexWhere((item) => item.id == cartItemId);
     if (index != -1) {
-      await updateQuantity(int.parse(cartItemId), _items[index].quantity - 1);
+      await updateQuantity(cartItemId, _items[index].quantity - 1);
     }
   }
 

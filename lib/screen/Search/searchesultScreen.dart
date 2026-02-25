@@ -6,6 +6,7 @@ import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
+import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
@@ -315,7 +316,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
           ),
           child: Row(
             children: [
@@ -378,8 +379,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("€${provider.priceRange.start.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w500)),
-                      Text("€${provider.priceRange.end.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Text("€${provider.priceRange.start.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.orange)),
+                      Text("€${provider.priceRange.end.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.orange)),
                     ],
                   ),
                 ],
@@ -526,7 +527,31 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
             );
           case SearchState.error:
-            return Center(child: Text(provider.errorMessage ?? 'An error occurred'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Search failed',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    provider.errorMessage ?? 'Something went wrong',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => _initializeSearchResult(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
           case SearchState.loaded:
             if (provider.searchResults.isEmpty) {
               return const Center(child: Text("No products found for this search."));
@@ -614,21 +639,28 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: detail.mainImageUrl, 
-                            height: 120, 
-                            width: 90, 
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 90),
-                            errorWidget: (context, url, error) => const Icon(Icons.error),
-                          ),
+                          child: detail.mainImageUrl.isEmpty
+                              ? Container(
+                                  height: 120,
+                                  width: 90,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                                )
+                              : CachedNetworkImage(
+                                  imageUrl: detail.mainImageUrl,
+                                  height: 120,
+                                  width: 90,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 90),
+                                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                                ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("€${detail.price.toStringAsFixed(2)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange)),
+                              styledPrice(detail.price, color: Colors.orange, fontSize: 20),
                               const SizedBox(height: 4),
                               Text(detail.name, style: const TextStyle(fontSize: 14, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
                             ],
@@ -638,28 +670,36 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                     ),
                     const SizedBox(height: 20),
                     if (detail.sizes != null && detail.sizes!.isNotEmpty) ...[
-                      const Text("Size", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: detail.sizes!.map((size) {
-                          final isSelected = provider.selectedSize == size;
-                          return GestureDetector(
-                            onTap: () => provider.selectSize(size),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Colors.black : Colors.white,
-                                border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(4),
+                      ...(detail.sizes!.where((size) => size.trim().isNotEmpty).map((size) => size.trim()).toList()).isEmpty
+                          ? []
+                          : [
+                              const Text("Size", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: detail.sizes!
+                                    .where((size) => size.trim().isNotEmpty)
+                                    .map((size) => size.trim())
+                                    .toList()
+                                    .map((size) {
+                                  final isSelected = provider.selectedSize == size;
+                                  return GestureDetector(
+                                    onTap: () => provider.selectSize(size),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? Colors.black : Colors.white,
+                                        border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(size, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
-                              child: Text(size, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
+                              const SizedBox(height: 20),
+                            ]
                     ],
                     const Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 8),
@@ -700,18 +740,34 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                             if (authProvider.state != AuthState.authenticated) return;
                           }
 
-                          if (provider.selectedSize == null) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
+                          final cleanedSizes = (detail.sizes ?? [])
+                              .where((size) => size.trim().isNotEmpty)
+                              .toList();
+
+                          final bool isMulticolor = detail.colors?.toLowerCase() == 'multicolor';
+                          final colorInput = isMulticolor ? colorController.text.trim() : detail.colors ?? '';
+
+                          if (cleanedSizes.isNotEmpty) {
+                            if (provider.selectedSize == null) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
+                              }
+                              return;
                             }
-                            return;
+                            
+                            if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please specify a color for this product!")));
+                              }
+                              return;
+                            }
                           }
 
                           final success = await context.read<CartProvider>().addToCart(
                             productId: detail.id, 
                             quantity: provider.quantity, 
-                            sizes: provider.selectedSize!,
-                            color: colorController.text,
+                            sizes: provider.selectedSize ?? '',
+                            color: colorInput,
                           );
                           
                           if (!mounted) return;
@@ -771,7 +827,7 @@ class ProductListCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -781,14 +837,21 @@ class ProductListCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
-              child: CachedNetworkImage(
-                imageUrl: product.mainImageUrl,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 100),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
+              child: product.mainImageUrl.isEmpty
+                  ? Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: product.mainImageUrl,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const ShimmerWidget.rectangular(height: 100, width: 100),
+                      errorWidget: (context, url, error) => const Icon(Icons.error),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -803,10 +866,7 @@ class ProductListCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    "€${product.price.toStringAsFixed(2)}",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
+                  styledPrice(product.price, fontSize: 16),
                   const Spacer(),
                   Align(
                     alignment: Alignment.bottomRight,

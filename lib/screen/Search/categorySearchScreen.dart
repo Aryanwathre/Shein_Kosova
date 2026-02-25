@@ -5,6 +5,7 @@ import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
+import 'package:shein_kosova/widgets/image_helper.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
@@ -119,13 +120,12 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
           },
           child: Column(
             children: [
-              Container(
-                height: 60,
+              buildNetworkImage(
+                category.categoryImage ?? '',
+                fit: BoxFit.cover,
                 width: 60,
-                decoration: BoxDecoration(
-                  image: DecorationImage(image: NetworkImage(category.categoryImage ?? '')),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                height: 60,
+                borderRadius: BorderRadius.circular(20),
               ),
               const SizedBox(height: 5),
               Text(

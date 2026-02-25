@@ -13,7 +13,7 @@ import 'package:shein_kosova/screen/userAccount/AboutUs_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/AddAddress_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/Addresses_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/EditAddress_Screen.dart';
-import 'package:shein_kosova/screen/userAccount/HelpCenter_Screen.dart';
+import 'package:shein_kosova/screen/userAccount/faq/HelpCenter_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/MyOrder/MyOrder_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/MyOrder/order_details_screen.dart';
 import 'package:shein_kosova/screen/userAccount/Notification_Screen.dart';

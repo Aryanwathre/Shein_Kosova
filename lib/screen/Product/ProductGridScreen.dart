@@ -51,7 +51,36 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
               );
             case ProductListState.error:
               return Center(
-                  child: Text(provider.listErrorMessage ?? "Failed to load products"));
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load products',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.listErrorMessage ?? "Something went wrong",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        if (widget.selectedCategoryId == 0) {
+                          provider.fetchAllProducts();
+                        } else {
+                          provider.getProductByCode(widget.selectedCategoryId, 0);
+                        }
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
             case ProductListState.loaded:
               if (provider.products.isEmpty) {
                 return const Center(child: Text("No products found."));

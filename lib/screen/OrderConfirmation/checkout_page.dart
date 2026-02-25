@@ -313,7 +313,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                       const SizedBox(height: 2),
                       Text(
-                          "${item.price}€ x${item.quantity}",
+                          "€${item.price.toStringAsFixed(2)} x${item.quantity}",
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black,

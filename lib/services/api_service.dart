@@ -128,6 +128,8 @@ class TokenManager {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userDataKey = 'user_data';
+  static const String _configColorKey = 'config_color';
+  static const String _paymentEnabledKey = 'payment_enabled';
 
   static bool _isRefreshing = false;
   static final List<Function> _refreshCallbacks = [];
@@ -183,6 +185,25 @@ class TokenManager {
     } catch (e) {
       debugPrint('Error getting user data: $e');
       return null;
+    }
+  }
+
+  static Future<void> saveConfigData(Map<String, dynamic> configData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (configData.containsKey('color')) {
+        final color = configData['color'];
+        if (color == null) {
+          await prefs.remove(_configColorKey);
+        } else {
+          await prefs.setString(_configColorKey, color.toString());
+        }
+      }
+      if (configData.containsKey('paymentEnabled')) {
+        await prefs.setBool(_paymentEnabledKey, configData['paymentEnabled'] == true);
+      }
+    } catch (e) {
+      debugPrint('Error saving config data: $e');
     }
   }
 
@@ -829,6 +850,31 @@ class HomeApi extends BaseApi {
   }
 }
 
+class ConfigApi extends BaseApi {
+  Future<ApiResponse<Map<String, dynamic>>> getConfig() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}config'), headers: headers),
+      parser: (json) => json is Map<String, dynamic> ? json : {},
+    );
+  }
+}
+
+class FAQApi extends BaseApi {
+  Future<ApiResponse<List<Map<String, dynamic>>>> getFAQs() async {
+    return makeRequest(
+      requireAuth: false,
+      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}faqs'), headers: headers),
+      parser: (json) {
+        if (json is List) {
+          return List<Map<String, dynamic>>.from(json);
+        }
+        return [];
+      },
+    );
+  }
+}
+
 // ==================== API SERVICE MANAGER ====================
 class ApiServiceManager {
   static final ApiServiceManager _instance = ApiServiceManager._internal();
@@ -850,6 +896,8 @@ class ApiServiceManager {
   final ColorsApi colorsApi = ColorsApi();
   final NotificationsApi notificationsApi = NotificationsApi();
   final HomeApi homeApi = HomeApi();
+  final ConfigApi configApi = ConfigApi();
+  final FAQApi faqApi = FAQApi();
 
   Future<bool> isUserLoggedIn() async { return await TokenManager.isTokenValid(); }
   Future<Map<String, dynamic>?> getCurrentUser() async { return await TokenManager.getUserData(); }

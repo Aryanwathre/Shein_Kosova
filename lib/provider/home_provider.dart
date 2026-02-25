@@ -48,26 +48,31 @@ class HomeProvider extends ChangeNotifier {
     return _tagLoadingMap[tag] ?? false;
   }
 
-  Future<void> initHome() async {
-    _state = HomeState.loading;
-    notifyListeners();
+  Future<void> initHome({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      _state = HomeState.loading;
+      notifyListeners();
+    } else {
+      // Clear specific caches on force refresh to ensure new data is pulled
+      _categoryProductsMap.clear();
+      _taggedProductsMap.clear();
+    }
 
     try {
       // 1. Prioritize and await core data for immediate display
       await Future.wait([
         _fetchBanners(),
         _fetchAllCategories(),
-        fetchProductsByCategory(0), // Load "All" products immediately
+        fetchProductsByCategory(0, forceRefresh: forceRefresh), // Load "All" products immediately
       ]);
       
       _state = HomeState.loaded;
       notifyListeners();
 
       // 2. Load background data without awaiting
-      // This reduces pressure on initial load and populates other tabs/sections asynchronously
       _fetchTags(); 
-      _fetchForYou();
-      _fetchDeals();
+      _fetchForYou(forceRefresh: forceRefresh);
+      _fetchDeals(forceRefresh: forceRefresh);
       
     } catch (e) {
       _errorMessage = 'An error occurred during initialization: $e';
@@ -146,8 +151,8 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchForYou() async {
-    if (_taggedProductsMap.containsKey("For You") && !(_tagLoadingMap["For You"] ?? false)) return;
+  Future<void> _fetchForYou({bool forceRefresh = false}) async {
+    if (!forceRefresh && _taggedProductsMap.containsKey("For You") && !(_tagLoadingMap["For You"] ?? false)) return;
     
     _tagLoadingMap["For You"] = true;
     notifyListeners();
@@ -165,8 +170,8 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchDeals() async {
-    if (_taggedProductsMap.containsKey("Deals") && !(_tagLoadingMap["Deals"] ?? false)) return;
+  Future<void> _fetchDeals({bool forceRefresh = false}) async {
+    if (!forceRefresh && _taggedProductsMap.containsKey("Deals") && !(_tagLoadingMap["Deals"] ?? false)) return;
 
     _tagLoadingMap["Deals"] = true;
     notifyListeners();
@@ -184,9 +189,9 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchProductsByTag(String tag) async {
+  Future<void> fetchProductsByTag(String tag, {bool forceRefresh = false}) async {
     final key = tag.toLowerCase();
-    if (_taggedProductsMap.containsKey(key) && !(_tagLoadingMap[key] ?? false)) {
+    if (!forceRefresh && _taggedProductsMap.containsKey(key) && !(_tagLoadingMap[key] ?? false)) {
       return;
     }
 
@@ -210,8 +215,8 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchProductsByCategory(int categoryId) async {
-    if (_categoryProductsMap.containsKey(categoryId) && !(_categoryLoadingMap[categoryId] ?? false)) {
+  Future<void> fetchProductsByCategory(int categoryId, {bool forceRefresh = false}) async {
+    if (!forceRefresh && _categoryProductsMap.containsKey(categoryId) && !(_categoryLoadingMap[categoryId] ?? false)) {
       return;
     }
 

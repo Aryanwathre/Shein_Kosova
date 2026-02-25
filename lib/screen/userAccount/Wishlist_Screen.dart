@@ -29,6 +29,33 @@ class WishlistScreen extends StatelessWidget {
               itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
             );
           }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to load wishlist',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => Provider.of<WishlistProvider>(context, listen: false).loadWishlist(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
           return Consumer<WishlistProvider>(
             builder: (context, provider, _) {
               final wishlist = provider.wishlistItems;
@@ -53,7 +80,7 @@ class WishlistScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 5,
                           offset: const Offset(0, 2),
                         ),
@@ -74,12 +101,17 @@ class WishlistScreen extends StatelessWidget {
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                                 child: AspectRatio(
                                   aspectRatio: 0.75,
-                                  child: CachedNetworkImage(
-                                    imageUrl: item.mainImageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
-                                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                                  ),
+                                  child: item.mainImageUrl.isEmpty
+                                      ? Container(
+                                          color: Colors.grey[200],
+                                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                                        )
+                                      : CachedNetworkImage(
+                                          imageUrl: item.mainImageUrl,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
+                                          errorWidget: (context, url, error) => const Icon(Icons.error),
+                                        ),
                                 ),
                               ),
                               Positioned(
@@ -89,7 +121,7 @@ class WishlistScreen extends StatelessWidget {
                                   height: 36,
                                   width: 36,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     shape: BoxShape.circle,
                                   ),
                                   child: IconButton(

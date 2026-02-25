@@ -1,7 +1,7 @@
 
 class CartItem {
   final String id;
-  final int productId; // Changed to int to match usage in provider
+  final int productId; 
   final String name;
   final String image;
   final double price;
@@ -25,7 +25,9 @@ class CartItem {
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
       id: json['cartItemId']?.toString() ?? '',
-      productId: int.tryParse(json['productId']?.toString() ?? '0') ?? 0,
+      productId: json['productId'] is int 
+          ? json['productId'] 
+          : int.tryParse(json['productId']?.toString() ?? '0') ?? 0,
       name: json['productName'] ?? 'Unnamed Product',
       image: json['mainImageUrl'] ?? '',
       price: (json['price'] as num? ?? 0.0).toDouble(),

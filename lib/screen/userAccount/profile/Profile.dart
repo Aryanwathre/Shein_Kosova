@@ -74,16 +74,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(provider.errorMessage ?? 'An error occurred'),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => provider.loadUserProfile(),
-                      child: const Text('Retry'),
+                    const Text(
+                      'Failed to load profile',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    TextButton(
-                        onPressed: _handleLogout,
-                        child: const Text('Logout', style: TextStyle(color: Colors.red))
-                    )
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.errorMessage ?? 'Something went wrong',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => provider.loadUserProfile(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: _handleLogout,
+                      label: const Text('Logout', style: TextStyle(color: Colors.red)),
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                    ),
                   ],
                 ),
               );
