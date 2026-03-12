@@ -15,6 +15,12 @@ class ConfigProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  bool _codEnabled = false;
+  bool get codEnabled => _codEnabled;
+
+  bool _bankEnabled = false;
+  bool get bankEnabled => _bankEnabled;
+
   Future<void> loadConfig() async {
     _state = ConfigState.loading;
     notifyListeners();
@@ -24,8 +30,13 @@ class ConfigProvider extends ChangeNotifier {
 
       if (response.success && response.data != null) {
         _configData = response.data;
+        
         // Save to Shared Preferences
         await TokenManager.saveConfigData(_configData!);
+        
+        // Update local state
+        _codEnabled = await TokenManager.isCodEnabled();
+        _bankEnabled = await TokenManager.isBankEnabled();
         
         _state = ConfigState.loaded;
         debugPrint('✅ Config loaded successfully: $_configData');
@@ -51,6 +62,8 @@ class ConfigProvider extends ChangeNotifier {
     _state = ConfigState.initial;
     _configData = null;
     _errorMessage = null;
+    _codEnabled = false;
+    _bankEnabled = false;
     notifyListeners();
   }
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/image_helper.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
@@ -87,8 +88,8 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
       return GridView.builder(
         padding: const EdgeInsets.all(10),
         itemCount: 9,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: ResponsiveHelper.isDesktop(context) ? 6 : 3,
           childAspectRatio: 1.35,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
@@ -105,8 +106,8 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
       controller: _gridScrollController,
       padding: const EdgeInsets.all(10),
       itemCount: categories.length,
-      gridDelegate:  const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 6 : 3,
         childAspectRatio: 1.35,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,

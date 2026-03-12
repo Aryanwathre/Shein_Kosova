@@ -2,7 +2,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/models/UserProfile.dart';
-import 'package:shein_kosova/models/order_model.dart';import 'package:shein_kosova/screen/Auth/login_screen.dart';
+import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/screen/Auth/login_screen.dart';
 import 'package:shein_kosova/screen/Auth/register_screen.dart';
 import 'package:shein_kosova/screen/OrderConfirmation/OrderPlacedSuccess.dart';
 import 'package:shein_kosova/screen/OrderConfirmation/checkout_page.dart';
@@ -13,13 +14,16 @@ import 'package:shein_kosova/screen/userAccount/AboutUs_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/AddAddress_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/Addresses_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Address/EditAddress_Screen.dart';
+import 'package:shein_kosova/screen/userAccount/PrivacyPolicy_Screen.dart';
+import 'package:shein_kosova/screen/userAccount/TermsAndConditions_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/faq/HelpCenter_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/MyOrder/MyOrder_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/MyOrder/order_details_screen.dart';
 import 'package:shein_kosova/screen/userAccount/Notification_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Wishlist_Screen.dart';
-import 'package:shein_kosova/screen/userAccount/profile/change_password_screen.dart';
+import 'package:shein_kosova/screen/userAccount/profile/Profile.dart';
 import 'package:shein_kosova/screen/userAccount/profile/edit_profile_screen.dart';
+import 'package:shein_kosova/screen/userAccount/profile/change_password_screen.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 class AppRoutes {
@@ -43,6 +47,10 @@ class AppRoutes {
   static const String checkout = '/checkout';
   static const String orderPlacedSuccess = '/order-success';
   static const String search = '/search';
+  static String termsAndConditions = '/terms-and-conditions';
+  static String privacyPolicy = '/privacy-policy';
+  static const String cart = '/cart';
+  static const String profile = '/profile';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -95,8 +103,24 @@ class AppRoutes {
         builder: (context, state) => const WishlistScreen(),
       ),
       GoRoute(
+        path: cart,
+        builder: (context, state) => const LandingPage(selectedIndex: 2),
+      ),
+      GoRoute(
+        path: profile,
+        builder: (context, state) => const LandingPage(selectedIndex: 3),
+      ),
+      GoRoute(
         path: aboutUs,
         builder: (context, state) => const AboutUsPage(),
+      ),
+      GoRoute(
+        path: termsAndConditions,
+        builder: (context, state) => const TermsAndConditionsPage(),
+      ),
+      GoRoute(
+        path: privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyPage(),
       ),
       GoRoute(
         path: helpCenter,

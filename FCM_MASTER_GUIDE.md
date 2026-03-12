@@ -829,7 +829,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Shein Kosova',
+      title: 'S-Kosova',
       routerConfig: router,
       theme: ThemeData(
         primarySwatch: Colors.blue,

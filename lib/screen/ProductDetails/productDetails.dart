@@ -9,6 +9,8 @@ import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
+import 'package:shein_kosova/utils/size_utils.dart';
 import 'package:shein_kosova/widgets/FullScreenImageViewer.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/RatingReviewsWidget.dart';
@@ -202,7 +204,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       'https://s-kosova.com/products/${product.id}';
 
                   Share.share(
-                    'Check out this product on Shein Kosova: ${product.name}\n\n$productUrl',
+                    'Check out this product on S-Kosova: ${product.name}\n\n$productUrl',
                     sharePositionOrigin:
                     box.localToGlobal(Offset.zero) & box.size,
                   );
@@ -435,13 +437,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             .map((size) => size.trim())
             .toList();
 
+        // Sort sizes using SizeUtils
+        final sortedSizes = SizeUtils.sortSizes(cleanedSizes);
+
         return Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Visibility(
-                visible: cleanedSizes.isNotEmpty,
+                visible: sortedSizes.isNotEmpty,
                 child: const Text(
                   "Select Size",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -451,7 +456,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: cleanedSizes.map((size) => ChoiceChip(
+                children: sortedSizes.map((size) => ChoiceChip(
                   label: Text(size),
                   selected: provider.selectedSize == size,
                   onSelected: (_) => provider.selectSize(size),

@@ -7,6 +7,7 @@ import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
@@ -518,8 +519,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             return GridView.builder(
               padding: const EdgeInsets.all(10),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _viewAsGrid ? 2 : 1,
-                childAspectRatio: _viewAsGrid ? 0.58 : 2.5,
+                crossAxisCount: _viewAsGrid ? ResponsiveHelper.getGridColumns(context) : 1,
+                childAspectRatio: _viewAsGrid ? 0.55 : 2.5,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
@@ -560,8 +561,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               controller: _scrollController,
               padding: const EdgeInsets.all(10),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _viewAsGrid ? 2 : 1,
-                childAspectRatio: _viewAsGrid ? 0.58 : 2.5,
+                crossAxisCount: _viewAsGrid ? ResponsiveHelper.getGridColumns(context) : 1,
+                childAspectRatio: _viewAsGrid ? 0.55 : 2.5,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),

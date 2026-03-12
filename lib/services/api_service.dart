@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shein_kosova/models/ReviewModel.dart';
 import 'package:shein_kosova/models/category_model.dart';
 import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/services/storage_service.dart';
 
 // ==================== CONSTANTS ====================
 class AppConstants {
@@ -129,19 +129,31 @@ class TokenManager {
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userDataKey = 'user_data';
   static const String _configColorKey = 'config_color';
-  static const String _paymentEnabledKey = 'payment_enabled';
+  static const String _codEnabledKey = 'cod_enabled';
+  static const String _bankEnabledKey = 'bank_enabled';
 
   static bool _isRefreshing = false;
   static final List<Function> _refreshCallbacks = [];
+  static final StorageService _storage = StorageService();
+
+  /// Initialize storage service (call once during app startup)
+  static Future<void> initializeStorage() async {
+    final initialized = await _storage.initialize();
+    if (!initialized) {
+      debugPrint('⚠️ TokenManager: Storage persistence unavailable, using in-memory fallback');
+      if (kIsWeb) {
+        debugPrint('💡 Tip: Check browser console for storage errors. Ensure not in private mode.');
+      }
+    }
+  }
 
   static Future<TokenData?> getTokenData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final tokenJson = prefs.getString(_tokenDataKey);
+      final tokenJson = await _storage.getString(_tokenDataKey);
       if (tokenJson == null) return null;
       return TokenData.fromStoredJson(jsonDecode(tokenJson));
     } catch (e) {
-      debugPrint('Error getting token data: $e');
+      debugPrint('❌ TokenManager: Error getting token data: $e');
       await clearAllData();
       return null;
     }
@@ -149,12 +161,12 @@ class TokenManager {
 
   static Future<void> saveTokenData(TokenData tokenData) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenDataKey, jsonEncode(tokenData.toJson()));
-      await prefs.setString(_accessTokenKey, tokenData.accessToken);
-      await prefs.setString(_refreshTokenKey, tokenData.refreshToken);
+      await _storage.setString(_tokenDataKey, jsonEncode(tokenData.toJson()));
+      await _storage.setString(_accessTokenKey, tokenData.accessToken);
+      await _storage.setString(_refreshTokenKey, tokenData.refreshToken);
+      debugPrint('✅ TokenManager: Token data saved successfully');
     } catch (e) {
-      debugPrint('Error saving token data: $e');
+      debugPrint('❌ TokenManager: Error saving token data: $e');
     }
   }
 
@@ -163,59 +175,87 @@ class TokenManager {
       final tokenData = TokenData.fromApiResponse(responseData);
       await saveTokenData(tokenData);
     } catch (e) {
-      debugPrint('Error saving tokens from response: $e');
+      debugPrint('❌ TokenManager: Error saving tokens from response: $e');
     }
   }
 
   static Future<void> saveUserData(Map<String, dynamic> userData) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userDataKey, jsonEncode(userData));
+      await _storage.setString(_userDataKey, jsonEncode(userData));
+      debugPrint('✅ TokenManager: User data saved successfully');
     } catch (e) {
-      debugPrint('Error saving user data: $e');
+      debugPrint('❌ TokenManager: Error saving user data: $e');
     }
   }
 
   static Future<Map<String, dynamic>?> getUserData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userJson = prefs.getString(_userDataKey);
+      final userJson = await _storage.getString(_userDataKey);
       if (userJson == null) return null;
       return jsonDecode(userJson);
     } catch (e) {
-      debugPrint('Error getting user data: $e');
+      debugPrint('❌ TokenManager: Error getting user data: $e');
       return null;
     }
   }
 
   static Future<void> saveConfigData(Map<String, dynamic> configData) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      // Handle color
       if (configData.containsKey('color')) {
         final color = configData['color'];
         if (color == null) {
-          await prefs.remove(_configColorKey);
+          await _storage.remove(_configColorKey);
         } else {
-          await prefs.setString(_configColorKey, color.toString());
+          await _storage.setString(_configColorKey, color.toString());
         }
       }
-      if (configData.containsKey('paymentEnabled')) {
-        await prefs.setBool(_paymentEnabledKey, configData['paymentEnabled'] == true);
+
+      // Handle paymentConfigResponse
+      if (configData.containsKey('paymentConfigResponse')) {
+        final paymentConfig = configData['paymentConfigResponse'];
+        if (paymentConfig is Map<String, dynamic>) {
+          if (paymentConfig.containsKey('codEnabled')) {
+            await _storage.setBool(_codEnabledKey, paymentConfig['codEnabled'] == true);
+          }
+          if (paymentConfig.containsKey('bankEnabled')) {
+            await _storage.setBool(_bankEnabledKey, paymentConfig['bankEnabled'] == true);
+          }
+        }
       }
+      debugPrint('✅ TokenManager: Config data saved successfully');
     } catch (e) {
-      debugPrint('Error saving config data: $e');
+      debugPrint('❌ TokenManager: Error saving config data: $e');
+    }
+  }
+
+  static Future<bool> isCodEnabled() async {
+    try {
+      return await _storage.getBool(_codEnabledKey);
+    } catch (e) {
+      debugPrint('❌ TokenManager: Error checking COD enabled: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> isBankEnabled() async {
+    try {
+      return await _storage.getBool(_bankEnabledKey);
+    } catch (e) {
+      debugPrint('❌ TokenManager: Error checking bank enabled: $e');
+      return false;
     }
   }
 
   static Future<void> clearAllData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenDataKey);
-      await prefs.remove(_accessTokenKey);
-      await prefs.remove(_refreshTokenKey);
-      await prefs.remove(_userDataKey);
+      await _storage.remove(_tokenDataKey);
+      await _storage.remove(_accessTokenKey);
+      await _storage.remove(_refreshTokenKey);
+      await _storage.remove(_userDataKey);
+      debugPrint('✅ TokenManager: All data cleared successfully');
     } catch (e) {
-      debugPrint('Error clearing data: $e');
+      debugPrint('❌ TokenManager: Error clearing data: $e');
     }
   }
 

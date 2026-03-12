@@ -35,6 +35,9 @@ class HomeProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  // Added products getter to support Web UI and maintain backward compatibility if needed
+  List<ProductModel> get products => _categoryProductsMap[0] ?? [];
+
   List<ProductModel> getProductsForCategory(int categoryId) => _categoryProductsMap[categoryId] ?? [];
   bool isCategoryLoading(int categoryId) => _categoryLoadingMap[categoryId] ?? false;
 

@@ -4,10 +4,7 @@
     <!-- Permissions for scheduled notifications -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <!-- Permission for full-screen intent notifications -->
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
-    <!-- Permission to bypass Do Not Disturb mode -->
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+
 
     <application
         android:label="shein_kosova"

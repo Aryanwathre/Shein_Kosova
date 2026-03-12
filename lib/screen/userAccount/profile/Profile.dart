@@ -5,7 +5,6 @@ import 'package:shein_kosova/provider/Profile_provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -51,18 +50,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final authProvider = context.watch<AuthProvider>();
 
     if (!authProvider.isAuthenticated) {
       // Safety fallback (should rarely happen)
-      return const Scaffold(body: Center(child: ShimmerWidget.rectangular(height: 200)));
+      return const Scaffold(
+        body: Center(child: ShimmerWidget.rectangular(height: 200)),
+      );
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Profile"), centerTitle: true),
       body: Consumer<ProfileProvider>(
         builder: (context, provider, child) {
           // Handle different states from the provider
@@ -74,11 +71,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Failed to load profile',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -95,7 +99,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 16),
                     TextButton.icon(
                       onPressed: _handleLogout,
-                      label: const Text('Logout', style: TextStyle(color: Colors.red)),
+                      label: const Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
                       icon: const Icon(Icons.logout, color: Colors.red),
                     ),
                   ],
@@ -150,14 +157,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const ShimmerWidget.rectangular(height: 16, width: 200),
                 ],
               ),
-            )
+            ),
           ],
         ),
         const SizedBox(height: 40),
-        ...List.generate(5, (index) => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8.0),
-          child: ShimmerWidget.rectangular(height: 50),
-        )),
+        ...List.generate(
+          5,
+          (index) => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: ShimmerWidget.rectangular(height: 50),
+          ),
+        ),
       ],
     );
   }
@@ -194,19 +204,23 @@ class _ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 5),
                 Text(email, style: TextStyle(color: Colors.grey[600])),
                 const SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: onEdit,
                   child: const Text("Edit Profile"),
-                )
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -223,49 +237,70 @@ class _ProfileMenu extends StatelessWidget {
     return Column(
       children: [
         _MenuTile(
-            icon: Icons.shopping_bag_outlined,
-            title: "My Orders",
-            onTap: () {
-              context.push('/my-orders');
-            }),
+          icon: Icons.shopping_bag_outlined,
+          title: "My Orders",
+          onTap: () {
+            context.push('/my-orders');
+          },
+        ),
         _MenuTile(
-            icon: Icons.favorite_border,
-            title: "Wishlist",
-            onTap: () {
-              context.push('/wishlist');
-            }),
+          icon: Icons.favorite_border,
+          title: "Wishlist",
+          onTap: () {
+            context.push('/wishlist');
+          },
+        ),
         _MenuTile(
-            icon: Icons.notifications_none,
-            title: "Notifications",
-            onTap: () {
-              context.push('/notifications');
-            }),
+          icon: Icons.notifications_none,
+          title: "Notifications",
+          onTap: () {
+            context.push('/notifications');
+          },
+        ),
         const Divider(),
         _MenuTile(
-            icon: Icons.location_on_outlined,
-            title: "Saved Addresses",
-            onTap: () {
-              context.push('/addresses');
-            }),
+          icon: Icons.location_on_outlined,
+          title: "Saved Addresses",
+          onTap: () {
+            context.push('/addresses');
+          },
+        ),
         _MenuTile(
-            icon: Icons.lock_outline,
-            title: "Change Password",
-            onTap: () {
-              context.push('/change-password');
-            }),
+          icon: Icons.lock_outline,
+          title: "Change Password",
+          onTap: () {
+            context.push('/change-password');
+          },
+        ),
         const Divider(),
         _MenuTile(
-            icon: Icons.help_outline,
-            title: "Help Center",
-            onTap: () {
-              context.push('/help-center');
-            }),
+          icon: Icons.help_outline,
+          title: "Help Center",
+          onTap: () {
+            context.push('/help-center');
+          },
+        ),
         _MenuTile(
-            icon: Icons.info_outline,
-            title: "About Us",
-            onTap: () {
-              context.push('/about-us');
-            }),
+          icon: Icons.info_outline,
+          title: "About Us",
+          onTap: () {
+            context.push('/about-us');
+          },
+        ),
+        _MenuTile(
+          icon: Icons.privacy_tip_outlined,
+          title: "Privacy Policy",
+          onTap: () {
+            context.push('/privacy-policy');
+          },
+        ),
+        _MenuTile(
+          icon: Icons.document_scanner_outlined,
+          title: "Terms & Conditions",
+          onTap: () {
+            context.push('/terms-and-conditions');
+          },
+        ),
         const Divider(),
         _MenuTile(
           icon: Icons.logout,
@@ -297,10 +332,7 @@ class _MenuTile extends StatelessWidget {
     final titleColor = color ?? Theme.of(context).textTheme.bodyLarge?.color;
     return ListTile(
       leading: Icon(icon, color: titleColor),
-      title: Text(
-        title,
-        style: TextStyle(color: titleColor),
-      ),
+      title: Text(title, style: TextStyle(color: titleColor)),
       onTap: onTap,
     );
   }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/CheckoutProvider.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
+import 'package:shein_kosova/provider/config_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 
@@ -38,6 +39,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final addressProvider = context.read<AddressProvider>();
       final checkoutProvider = context.read<CheckoutProvider>();
+      final configProvider = context.read<ConfigProvider>();
 
       // Ensure addresses are fetched
       if (addressProvider.addresses.isEmpty) {
@@ -56,6 +58,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
         // Set in CheckoutProvider
         checkoutProvider.setAddress(defaultAddress);
+      }
+
+      // Initialize default payment method based on config
+      if (!configProvider.codEnabled && configProvider.bankEnabled) {
+        setState(() {
+          selectedPayment = "bank";
+        });
       }
     });
   }
@@ -93,6 +102,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final cart = context.watch<CartProvider>();
     final address = context.watch<AddressProvider>();
     final checkout = context.watch<CheckoutProvider>();
+    final config = context.watch<ConfigProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Checkout")),
@@ -184,7 +194,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
            // const SizedBox(height: 20),
 
 
-           _paymentMethod(),
+           _paymentMethod(config),
            const SizedBox(height: 20),
 
            Container(
@@ -374,7 +384,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _paymentMethod() {
+  Widget _paymentMethod(ConfigProvider config) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _boxDecoration(),
@@ -384,43 +394,36 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           _sectionTitle("Payment Method"),
 
-          RadioListTile(
-            value: "cod",
-            groupValue: selectedPayment,
-            onChanged: (val) {
-              setState(() => selectedPayment = val.toString());
-            },
-            title: Text("Cash on Delivery",
-                style: TextStyle(color: AppColors.textDark)),
-          ),
+          if (config.codEnabled)
+            RadioListTile(
+              value: "cod",
+              groupValue: selectedPayment,
+              onChanged: (val) {
+                setState(() => selectedPayment = val.toString());
+              },
+              title: Text("Cash on Delivery",
+                  style: TextStyle(color: AppColors.textDark)),
+            ),
 
-          // RadioListTile(
-          //   value: "card",
-          //   groupValue: selectedPayment,
-          //   onChanged: (val) {
-          //     setState(() => selectedPayment = val.toString());
-          //   },
-          //   title: Column(
-          //     crossAxisAlignment: CrossAxisAlignment.start,
-          //     mainAxisAlignment: MainAxisAlignment.start,
-          //     children: [
-          //        Text("Credit / Debit Card", style: TextStyle(color: AppColors.textDark)),
-          //       SizedBox(
-          //         height: 40,
-          //         child: ListView.builder(
-          //           scrollDirection: Axis.horizontal,
-          //           physics: const NeverScrollableScrollPhysics(),
-          //             shrinkWrap: true,
-          //             itemCount: card.length,
-          //             itemBuilder: (context, index){
-          //             return SvgPicture.asset(card[index], height: 20, width: 20,);
-          //             }
-          //         ),
-          //       ),
-          //
-          //     ],
-          //   ),
-          // ),
+          if (config.bankEnabled)
+            RadioListTile(
+              value: "bank",
+              groupValue: selectedPayment,
+              onChanged: (val) {
+                setState(() => selectedPayment = val.toString());
+              },
+              title: Text("Bank Transfer",
+                  style: TextStyle(color: AppColors.textDark)),
+            ),
+
+          if (!config.codEnabled && !config.bankEnabled)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                "No payment methods available at the moment.",
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ),
         ],
       ),
     );

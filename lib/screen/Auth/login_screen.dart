@@ -1,7 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/constants/routes.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/widgets/custom_text_fields.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -82,7 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 const SizedBox(height: 50),
 
@@ -144,8 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text('Login'),
                       ),
@@ -170,7 +174,43 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 60),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'By continuing, you agree to our ',
+                        style: TextStyle(color: AppColors.grey500),
+                      ),
+                      TextSpan(
+                        text: 'Terms and Conditions',
+                        style:  TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            context.pushNamed(AppRoutes.termsAndConditions);
+                          },
+                      ),
+                      const TextSpan(
+                        text: ' and ',
+                        style: TextStyle(color: AppColors.grey500),
+                      ),
+                      TextSpan(
+                        text: 'Privacy Policy',
+                        style:  TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            context.pushNamed(AppRoutes.privacyPolicy);
+                          },
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

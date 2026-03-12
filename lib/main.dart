@@ -30,12 +30,19 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Load local config for colors
-  await AppColors.loadConfig();
+  // Initialize storage service (handles web storage limitations)
+  await TokenManager.initializeStorage();
 
-  // Initialize Notification Service
+  // Initialize Notification Service (web-safe)
   final notificationService = NotificationService();
   await notificationService.init();
+
+  // Load configuration from API (this saves to Shared Preferences)
+  final configProvider = ConfigProvider();
+  await configProvider.loadConfig();
+
+  // Load local config for colors (depends on saved config)
+  await AppColors.loadConfig();
 
   // Refresh JWT token on startup if a refresh token is available
   try {
@@ -62,7 +69,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
-        ChangeNotifierProvider(create: (_) => ConfigProvider()),
+        ChangeNotifierProvider.value(value: configProvider),
         ChangeNotifierProvider(create: (_) => FAQProvider()),
       ],
       child: const MyApp(),
@@ -81,6 +88,29 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.theme,
       themeMode: ThemeMode.system,
       routerConfig: AppRoutes.router,
+      builder: (context, child) {
+        if (kIsWeb) {
+          return Container(
+            color: const Color(0xFFF5F5F5), // Light grey background for the "sides"
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: child!,
+              ),
+            ),
+          );
+        }
+        return child!;
+      },
     );
   }
 }

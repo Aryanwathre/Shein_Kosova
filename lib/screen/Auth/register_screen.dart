@@ -1,6 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/widgets/custom_text_fields.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -232,11 +235,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        context.pop();
                       },
                       child: const Text('Sign In'),
                     ),
                   ],
+                ),
+
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'By continuing, you agree to our ',
+                        style: TextStyle(color: AppColors.grey500),
+                      ),
+                      TextSpan(
+                        text: 'Terms and Conditions',
+                        style:  TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            context.push('/terms-and-conditions');
+                          },
+                      ),
+                      const TextSpan(
+                        text: ' and ',
+                        style: TextStyle(color: AppColors.grey500),
+                      ),
+                      TextSpan(
+                        text: 'Privacy Policy',
+                        style:  TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            context.push('/privacy-policy');
+                          },
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 32),

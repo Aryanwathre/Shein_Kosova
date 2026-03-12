@@ -6,6 +6,7 @@ import 'package:shein_kosova/provider/auth_provider.dart';
 import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
 import 'package:shein_kosova/utils/BiteClipper.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/carouselSlider.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
@@ -599,14 +600,20 @@ class _CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Adjust grid columns based on device type
+    int crossAxisCount = ResponsiveHelper.isDesktop(context) ? 6 : 3;
+    double height = ResponsiveHelper.isDesktop(context)
+        ? MediaQuery.of(context).size.height * 0.35
+        : MediaQuery.of(context).size.height * 0.4;
+
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: height,
       child: GridView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(5),
         itemCount: categories.isEmpty ? 15 : categories.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
           childAspectRatio: 1.35,
           mainAxisSpacing: 5,
           crossAxisSpacing: 5,

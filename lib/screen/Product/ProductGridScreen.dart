@@ -4,6 +4,7 @@ import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
 
 
 class ProductGridScreen extends StatefulWidget {
@@ -41,11 +42,11 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
               return GridView.builder(
                 padding: const EdgeInsets.all(8),
                 itemCount: 6,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: ResponsiveHelper.getGridColumns(context),
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
-                  childAspectRatio: 0.58,
+                  childAspectRatio: 0.55,
                 ),
                 itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 250),
               );
@@ -90,11 +91,11 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                 physics: widget.scrollingPhyscis == true ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(8),
                 itemCount: provider.products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: ResponsiveHelper.getGridColumns(context),
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
-                  childAspectRatio: 0.58, // Adjust as needed for your ProductCard design
+                  childAspectRatio: 0.55, // Adjusted from 0.58 to prevent overflow
                 ),
                 itemBuilder: (context, index) {
                   final product = provider.products[index];

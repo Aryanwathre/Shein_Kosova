@@ -25,7 +25,13 @@ class NotificationService {
       return;
     }
 
-    // Request permissions
+    // Skip notification setup on web - web uses browser push notifications
+    if (kIsWeb) {
+      debugPrint('Running on web platform. Browser push notifications can be set up separately.');
+      return;
+    }
+
+    // Request permissions (mobile only)
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -40,58 +46,57 @@ class NotificationService {
       debugPrint('User denied notification permission');
     }
 
-    if (!kIsWeb) {
-      // Initialize local notifications
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Initialize local notifications for Android/iOS
+    // Initialize local notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+    const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        _handleNotificationTap(response.payload);
+      },
+      onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
+    );
+
+    // Create Android Notification Channel
+    if (Platform.isAndroid) {
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'high_importance_channel',
+        'High Importance Notifications',
+        description: 'This channel is used for important notifications.',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
       );
 
-      const InitializationSettings initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS,
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+    }
+
+    // Request iOS notification permissions
+    if (Platform.isIOS) {
+      await _fcm.requestPermission(
+        alert: true,
+        announcement: true,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
       );
-
-      await _localNotifications.initialize(
-        initializationSettings,
-        onDidReceiveNotificationResponse: (NotificationResponse response) {
-          _handleNotificationTap(response.payload);
-        },
-        onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
-      );
-
-      // Create Android Notification Channel
-      if (Platform.isAndroid) {
-        const AndroidNotificationChannel channel = AndroidNotificationChannel(
-          'high_importance_channel',
-          'High Importance Notifications',
-          description: 'This channel is used for important notifications.',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-        );
-
-        await _localNotifications
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-            ?.createNotificationChannel(channel);
-      }
-
-      // Request iOS notification permissions
-      if (Platform.isIOS) {
-        await _fcm.requestPermission(
-          alert: true,
-          announcement: true,
-          badge: true,
-          carPlay: false,
-          criticalAlert: false,
-          provisional: false,
-          sound: true,
-        );
-      }
     }
 
     // Set up notification handlers BEFORE calling getInitialMessage
@@ -117,13 +122,16 @@ class NotificationService {
   }
 
   void _setupNotificationHandlers() {
+    // Skip handlers on web
+    if (kIsWeb) return;
+
     // Handle background messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     // Handle foreground messages (app open)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Handling a foreground message: ${message.messageId}');
-      if (message.notification != null && !kIsWeb) {
+      if (message.notification != null) {
         _showLocalNotification(message);
       }
     });

@@ -1,5 +1,6 @@
 import 'package:shein_kosova/models/ReviewModel.dart';
 import 'package:shein_kosova/models/category_model.dart';
+import 'package:shein_kosova/utils/size_utils.dart';
 
 class ProductModel {
   final int id;
@@ -45,6 +46,14 @@ class ProductModel {
         .where((img) => img.trim().isNotEmpty)
         .toList();
 
+    // Sanitize and sort sizes
+    List<String> rawSizes = json['sizes'] != null ? List<String>.from(json['sizes']) : [];
+    List<String> cleanedSizes = rawSizes
+        .where((size) => size.trim().isNotEmpty)
+        .map((size) => size.trim())
+        .toList();
+    List<String> sortedSizes = SizeUtils.sortSizes(cleanedSizes);
+
     return ProductModel(
       id: json['id'] is String
           ? int.tryParse(json['id']) ?? 0
@@ -66,7 +75,7 @@ class ProductModel {
       mainImageUrl: (json['mainImageUrl'] as String?)?.trim() ?? '',
       detailImages: sanitizedDetailImages,
       colors: json['color'],
-      sizes: json['sizes'] != null ? List<String>.from(json['sizes']) : [],
+      sizes: sortedSizes,
       variants: json['variants'] != null
           ? (json['variants'] as List)
           .map((v) => ProductVariant.fromJson(v))
@@ -146,6 +155,13 @@ class ProductVariant {
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
+    List<String> rawSizes = json['sizes'] != null ? List<String>.from(json['sizes']) : [];
+    List<String> cleanedSizes = rawSizes
+        .where((size) => size.trim().isNotEmpty)
+        .map((size) => size.trim())
+        .toList();
+    List<String> sortedSizes = SizeUtils.sortSizes(cleanedSizes);
+
     return ProductVariant(
       id: json['id'] is String
           ? int.tryParse(json['id']) ?? 0
@@ -153,7 +169,7 @@ class ProductVariant {
       name: json['name'] ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
-      sizes: json['sizes'] != null ? List<String>.from(json['sizes']) : [],
+      sizes: sortedSizes,
       enabled: json['enabled'] ?? false,
       category: json['category'] != null
           ? CategoryModel.fromJson(json['category'])
