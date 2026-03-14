@@ -66,19 +66,16 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "SH Kosova",
-              style: GoogleFonts.outfit(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-                letterSpacing: 1.2,
-              ),
+            const Spacer(),
+            Image.asset(
+              'assets/logo.png',
+              width: 250,
+              fit: BoxFit.contain,
             ),
             const Spacer(),
             // Show loading indicator while config is being loaded
             Align(
-              alignment:Alignment.bottomCenter,
+              alignment: Alignment.bottomCenter,
               child: Consumer<ConfigProvider>(
                 builder: (context, configProvider, child) {
                   if (configProvider.state == ConfigState.loading) {
@@ -95,6 +92,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
                             color: Colors.grey,
                           ),
                         ),
+                        const SizedBox(height: 48),
                       ],
                     );
                   } else {

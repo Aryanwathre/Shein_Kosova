@@ -255,6 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style:  TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
@@ -270,6 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style:  TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {

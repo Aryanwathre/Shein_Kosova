@@ -341,7 +341,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _colorSection(BuildContext context, ProductModel product) {
-    final bool isMulticolor = product.colors?.toLowerCase() == 'multicolor';
+    if (product.colors == null || product.colors!.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
@@ -353,22 +355,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          if (isMulticolor)
-            TextField(
-              controller: _colorController,
-              decoration: InputDecoration(
-                hintText: "Enter color",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          TextField(
+            controller: _colorController,
+            decoration: InputDecoration(
+              hintText: "Enter color preference",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-            )
-          else
-            Text(
-              product.colors ?? "N/A",
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
+          ),
         ],
       ),
     );
@@ -440,17 +436,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         // Sort sizes using SizeUtils
         final sortedSizes = SizeUtils.sortSizes(cleanedSizes);
 
+        if (sortedSizes.isEmpty) return const SizedBox.shrink();
+
         return Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Visibility(
-                visible: sortedSizes.isNotEmpty,
-                child: const Text(
-                  "Select Size",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                ),
+              const Text(
+                "Select Size",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -691,37 +686,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         .where((size) => size.trim().isNotEmpty)
                         .toList();
 
-                    final bool isMulticolor = product.colors?.toLowerCase() == 'multicolor';
-                    final colorInput = isMulticolor ? _colorController.text.trim() : product.colors ?? '';
-
                     // If sizes are available, we MUST select one
-                    if (cleanedSizes.isNotEmpty) {
-                      if (provider.selectedSize == null) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select a size!')),
-                          );
-                        }
-                        return;
+                    if (cleanedSizes.isNotEmpty && provider.selectedSize == null) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select a size!')),
+                        );
                       }
-                      
-                      // Size is selected, now check multicolor requirement
-                      if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please specify a color for this product!')),
-                          );
-                        }
-                        return;
-                      }
-                    } 
-                    // If no sizes are available, we ignore the multicolor check and allow adding to cart
+                      return;
+                    }
                     
                     final success = await cartProvider.addToCart(
                       productId: product.id,
                       quantity: _quantity,
                       sizes: provider.selectedSize ?? '',
-                      color: colorInput,
+                      color: _colorController.text.trim(),
                     );
 
                     if (!mounted) return;

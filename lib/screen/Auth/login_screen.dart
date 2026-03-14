@@ -187,10 +187,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         style:  TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            context.pushNamed(AppRoutes.termsAndConditions);
+                            context.push('/terms-and-conditions');
                           },
                       ),
                       const TextSpan(
@@ -202,10 +203,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         style:  TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            context.pushNamed(AppRoutes.privacyPolicy);
+                            context.push('/privacy-policy');
                           },
                       ),
                     ],
