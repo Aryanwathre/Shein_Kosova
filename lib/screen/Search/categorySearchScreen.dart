@@ -6,7 +6,7 @@ import 'package:shein_kosova/provider/home_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/SearchBar.dart';
-import 'package:shein_kosova/widgets/image_helper.dart';
+import 'package:shein_kosova/widgets/category_grid.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
@@ -20,15 +20,12 @@ class CargorySearchScreen extends StatefulWidget {
 
 class _CargorySearchScreenState extends State<CargorySearchScreen> {
 
-  final ScrollController _gridScrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      // Re-use data from HomeProvider if available, otherwise initialize it
       if (homeProvider.categories.isEmpty) {
         homeProvider.initHome();
       }
@@ -40,20 +37,19 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(context),
-      body:_categoryGrid(context),
+      body: _buildBody(context),
     );
   }
 
   PreferredSize _appBar(BuildContext context){
     return PreferredSize(
-      preferredSize: const Size.fromHeight(200),
+      preferredSize: const Size.fromHeight(80),
       child: SafeArea(
-        top: true,
-        child:  Padding(
-          padding: const EdgeInsets.all(8.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
               children: [
-                Icon(Icons.mail_outline_outlined, size: 24, color: AppColors.black),
+                const Icon(Icons.mail_outline_outlined, size: 24, color: AppColors.black),
                 const SizedBox(width: 10),
                 Expanded(child: buildSquareSearchBar(context)),
                 const SizedBox(width: 10),
@@ -80,66 +76,55 @@ class _CargorySearchScreenState extends State<CargorySearchScreen> {
     );
   }
 
-  Widget _categoryGrid(BuildContext context) {
-    final homeProvider = Provider.of<HomeProvider>(context);
-    final categories = homeProvider.categories;
+  Widget _buildBody(BuildContext context) {
+    bool isDesktop = ResponsiveHelper.isDesktop(context);
 
-    if (categories.isEmpty && homeProvider.state == HomeState.loading) {
-      return GridView.builder(
-        padding: const EdgeInsets.all(10),
-        itemCount: 9,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: ResponsiveHelper.isDesktop(context) ? 6 : 3,
-          childAspectRatio: 1.35,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
+    return Consumer<HomeProvider>(
+      builder: (context, provider, _) {
+        final categories = provider.categories;
+
+        if (categories.isEmpty && provider.state == HomeState.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (categories.isEmpty && provider.state != HomeState.loading) {
+          return const Center(child: Text("No categories found."));
+        }
+
+        return CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Text(
+                  "Categories",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        SliverPadding(
+        padding: const EdgeInsets.all(12),
+        sliver: SliverGrid(gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 6 : 4, // 4 items per row on mobile
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.8,
         ),
-        itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 80),
-      );
-    }
-
-    if (categories.isEmpty && homeProvider.state != HomeState.loading) {
-      return const Center(child: Text("No categories found."));
-    }
-
-    return GridView.builder(
-      controller: _gridScrollController,
-      padding: const EdgeInsets.all(10),
-      itemCount: categories.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: ResponsiveHelper.isDesktop(context) ? 6 : 3,
-        childAspectRatio: 1.35,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-      ),
-      itemBuilder: (context, index) {
-        final category = categories[index];
-
-        return GestureDetector(
-          onTap: () {
-            context.push('/search-result?categoryId=${category.id}&searchTitle=${category.name}');
-          },
-          child: Column(
-            children: [
-              buildNetworkImage(
-                category.categoryImage ?? '',
-                fit: BoxFit.cover,
-                width: 60,
-                height: 60,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                category.name,
-                style: const TextStyle(fontSize: 12),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+        delegate: SliverChildBuilderDelegate(
+        (context, index) => CategoryCard(
+        category: categories[index],
+        forcedImageSize: isDesktop ? 80 : 60, // Optimized size
+        ),
+        childCount: categories.length,
+        ),
+        ),),
+            // You can add more sections here like "Trending Searches" or "Featured"
+          ],
         );
       },
     );
   }
-
 }

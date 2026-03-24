@@ -51,18 +51,27 @@ class ProductCardShimmer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AspectRatio(
-          aspectRatio: 0.72,
+          aspectRatio: 0.75,
           child: ShimmerWidget.rounded(
             height: double.infinity,
             borderRadius: 8,
           ),
         ),
         const SizedBox(height: 8),
-        const ShimmerWidget.rectangular(height: 12, width: 100),
-        const SizedBox(height: 4),
-        const ShimmerWidget.rectangular(height: 14, width: 60),
-        const SizedBox(height: 4),
-        const ShimmerWidget.rectangular(height: 10, width: 40),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const ShimmerWidget.rectangular(height: 10, width: double.infinity),
+                const ShimmerWidget.rectangular(height: 12, width: 60),
+                const ShimmerWidget.rectangular(height: 8, width: 40),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -74,14 +83,21 @@ class CategoryItemShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        ShimmerWidget.rounded(
-          height: 60,
-          width: 60,
-          borderRadius: 20,
+        Expanded(
+          flex: 3,
+          child: ShimmerWidget.rounded(
+            height: double.infinity,
+            width: double.infinity,
+            borderRadius: 20,
+          ),
         ),
         const SizedBox(height: 8),
-        const ShimmerWidget.rectangular(height: 10, width: 50),
+        const Expanded(
+          flex: 2,
+          child: ShimmerWidget.rectangular(height: 10, width: 50),
+        ),
       ],
     );
   }
@@ -111,7 +127,10 @@ class HomeShimmer extends StatelessWidget {
               itemCount: 5,
               itemBuilder: (context, index) => const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
-                child: CategoryItemShimmer(),
+                child: SizedBox(
+                  width: 70,
+                  child: CategoryItemShimmer()
+                ),
               ),
             ),
           ),
@@ -142,7 +161,7 @@ class HomeShimmer extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.57,
+                childAspectRatio: 0.55,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),

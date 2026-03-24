@@ -96,8 +96,7 @@ class HomeProvider extends ChangeNotifier {
     } else if (tag == "Deals") {
       await _fetchDeals();
     } else {
-      // It's a dynamic tag from products/tags (e.g., "trending")
-      await fetchProductsByTag(tag.toLowerCase());
+      await fetchProductsByTag(tag);
     }
   }
 
@@ -193,7 +192,8 @@ class HomeProvider extends ChangeNotifier {
   }
 
   Future<void> fetchProductsByTag(String tag, {bool forceRefresh = false}) async {
-    final key = tag.toLowerCase();
+    // Keep internal key as the original tag name to match with _TagSelector UI
+    final key = tag;
     if (!forceRefresh && _taggedProductsMap.containsKey(key) && !(_tagLoadingMap[key] ?? false)) {
       return;
     }
@@ -202,7 +202,8 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _api.homeApi.getProductsByTag(key);
+      // API requires lowercase tag name (e.g., "trending")
+      final response = await _api.homeApi.getProductsByTag(tag.toLowerCase());
       if (response.success && response.data != null) {
         final List<dynamic> content = response.data['content'] ?? [];
         _taggedProductsMap[key] = content.map((json) => ProductModel.fromJson(json)).toList();

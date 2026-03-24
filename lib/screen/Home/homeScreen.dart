@@ -9,6 +9,7 @@ import 'package:shein_kosova/utils/BiteClipper.dart';
 import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/ProductCard.dart';
 import 'package:shein_kosova/widgets/carouselSlider.dart';
+import 'package:shein_kosova/widgets/category_grid.dart';
 import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
@@ -173,7 +174,9 @@ class _HomescreenState extends State<Homescreen>
                 SliverAppBar(
                   automaticallyImplyLeading: false,
                   pinned: true,
-                  expandedHeight: hasBanners ? MediaQuery.of(context).size.width * 0.6 : 100,
+                  expandedHeight: hasBanners 
+                      ? (MediaQuery.of(context).size.width * 0.6).clamp(200.0, 500.0) 
+                      : 100,
                   backgroundColor: effectiveAppBarColor,
                   elevation: 0,
                   toolbarHeight: 100,
@@ -338,7 +341,7 @@ class _HomeLandingView extends StatelessWidget {
           SliverToBoxAdapter(
             child: Consumer<HomeProvider>(
               builder: (context, provider, _) =>
-                  _CategoryGrid(categories: provider.categories),
+                  CategoryGrid(categories: provider.categories),
             ),
           ),
       
@@ -356,15 +359,15 @@ class _HomeLandingView extends StatelessWidget {
                 return SliverPadding(
                   padding: const EdgeInsets.all(8),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: ResponsiveHelper.getGridColumns(context),
                       childAspectRatio: 0.57,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => const ProductCardShimmer(),
-                      childCount: 4,
+                      childCount: ResponsiveHelper.getGridColumns(context) * 2,
                     ),
                   ),
                 );
@@ -373,8 +376,8 @@ class _HomeLandingView extends StatelessWidget {
               return SliverPadding(
                 padding: const EdgeInsets.all(8),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.getGridColumns(context),
                     childAspectRatio: 0.57,
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
@@ -531,7 +534,7 @@ class _CategoryProductsViewState extends State<_CategoryProductsView>
           SliverToBoxAdapter(
             child: Consumer<HomeProvider>(
               builder: (context, provider, _) =>
-                  _CategoryGrid(categories: provider.categories),
+                  CategoryGrid(categories: provider.categories),
             ),
           ),
           Consumer<HomeProvider>(
@@ -548,15 +551,15 @@ class _CategoryProductsViewState extends State<_CategoryProductsView>
                     ),
                     sliver: SliverGrid(
                       gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: ResponsiveHelper.getGridColumns(context),
                             childAspectRatio: 0.57,
                             crossAxisSpacing: 5,
                             mainAxisSpacing: 5,
                           ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const ProductCardShimmer(),
-                        childCount: 4,
+                        childCount: ResponsiveHelper.getGridColumns(context) * 2,
                       ),
                     ),
                   );
@@ -569,8 +572,8 @@ class _CategoryProductsViewState extends State<_CategoryProductsView>
               return SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: ResponsiveHelper.getGridColumns(context),
                     childAspectRatio: 0.57,
                     crossAxisSpacing: 5,
                     mainAxisSpacing: 5,
@@ -594,72 +597,4 @@ class _CategoryProductsViewState extends State<_CategoryProductsView>
   }
 }
 
-class _CategoryGrid extends StatelessWidget {
-  final List<CategoryModel> categories;
-  const _CategoryGrid({required this.categories});
 
-  @override
-  Widget build(BuildContext context) {
-    // Adjust grid columns based on device type
-    int crossAxisCount = ResponsiveHelper.isDesktop(context) ? 6 : 3;
-    double height = ResponsiveHelper.isDesktop(context)
-        ? MediaQuery.of(context).size.height * 0.35
-        : MediaQuery.of(context).size.height * 0.4;
-
-    return SizedBox(
-      height: height,
-      child: GridView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(5),
-        itemCount: categories.isEmpty ? 15 : categories.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          childAspectRatio: 1.35,
-          mainAxisSpacing: 5,
-          crossAxisSpacing: 5,
-        ),
-        itemBuilder: (context, index) {
-          if (categories.isEmpty) {
-            return const CategoryItemShimmer();
-          }
-          String categoryId = categories[index].id.toString();
-          String categoryName = categories[index].name;
-          String categoryImage = categories[index].categoryImage ?? '';
-          return GestureDetector(
-            onTap: () {
-              context.push(
-                '/search-result?categoryId=$categoryId&searchTitle=$categoryName',
-              );
-            },
-            child: Column(
-              children: [
-                Container(
-                  height: 60,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    image: categoryImage.isNotEmpty
-                        ? DecorationImage(image: NetworkImage(categoryImage))
-                        : null,
-                    borderRadius: const BorderRadius.all(Radius.circular(20)),
-                    color: Colors.grey[200], // Fallback background color
-                  ),
-                  child: categoryImage.isEmpty
-                      ? Icon(Icons.image_not_supported, color: Colors.grey[400])
-                      : null,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  categories[index].name,
-                  style: const TextStyle(fontSize: 12),
-                  maxLines: 2,
-                  overflow: TextOverflow.fade,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
