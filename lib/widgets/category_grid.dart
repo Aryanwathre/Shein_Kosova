@@ -84,16 +84,29 @@ class CategoryCard extends StatelessWidget {
                         )
                       : null,
                   borderRadius: BorderRadius.circular(imageSize / 3),
+                  border: Border.all(color: Colors.grey[300]!, width: 1, ),
                   color: Colors.grey[100],
                 ),
                 child: categoryImage.isEmpty
                     ? Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Image.asset(
-                          'assets/2.png',
-                          fit: BoxFit.contain,
+                      padding: const EdgeInsets.all(4.0),
+                      child: Align(
+                        alignment: AlignmentGeometry.center,
+                        child: Text("SH",
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                              mobileSize: 24,
+                              tabletSize: 24,
+                              desktopSize: 24,
+                            ),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[400],
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      )
+                      ),
+                    )
                     : null,
               ),
               const SizedBox(height: 6),
