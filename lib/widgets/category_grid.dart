@@ -84,12 +84,16 @@ class CategoryCard extends StatelessWidget {
                         )
                       : null,
                   borderRadius: BorderRadius.circular(imageSize / 3),
-                  color: Colors.grey[200],
+                  color: Colors.grey[100],
                 ),
                 child: categoryImage.isEmpty
-                    ? Icon(Icons.category,
-                        color: Colors.grey[400],
-                        size: imageSize * 0.5)
+                    ? Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Image.asset(
+                          'assets/2.png',
+                          fit: BoxFit.contain,
+                        ),
+                      )
                     : null,
               ),
               const SizedBox(height: 6),
