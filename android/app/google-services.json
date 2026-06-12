@@ -1,45 +1,43 @@
 {
   "project_info": {
-    "project_number": "486355060056",
-    "project_id": "student-food-takeaway",
-    "storage_bucket": "student-food-takeaway.firebasestorage.app"
+    "project_number": "636085257748",
+    "project_id": "sh-kosova",
+    "storage_bucket": "sh-kosova.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:486355060056:android:2dcdd808f1c40ff80e112d",
-        "android_client_info": {
-          "package_name": "com.example.student_food_takeaway"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCJEkuaRVvyI-xULGpnW1KOK92p0tO9CwA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:486355060056:android:5fdb6520a011fb410e112d",
+        "mobilesdk_app_id": "1:636085257748:android:596e8b8d78104c44b54901",
         "android_client_info": {
           "package_name": "com.shein_ks.sheinKosova"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "636085257748-poo1t4fdf7uejk5ccu02im9l9mc3kqm9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyCJEkuaRVvyI-xULGpnW1KOK92p0tO9CwA"
+          "current_key": "AIzaSyCJVmfuw3DDUn0wNg0bocO-wl3qAZsMebI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "636085257748-poo1t4fdf7uejk5ccu02im9l9mc3kqm9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "636085257748-6onlm0fpt980ior951ffg1vaqhf40our.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.sheinKosova.RunnerTests"
+              }
+            }
+          ]
         }
       }
     }

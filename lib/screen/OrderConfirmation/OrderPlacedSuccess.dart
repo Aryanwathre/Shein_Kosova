@@ -1,5 +1,6 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 class OrderSuccessPage extends StatefulWidget {
@@ -95,7 +96,7 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>const LandingPage(selectedIndex: 0)));
+                      context.go('/shop');
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),

@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAy5fzusIXjDHKbTww2zOTJh_I3GAJjyrs</string>
+	<string>AIzaSyDzD3E178MKQETZ0tnmuxSDKAVuRuDCXJM</string>
 	<key>GCM_SENDER_ID</key>
-	<string>486355060056</string>
+	<string>636085257748</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.sheinKosova.RunnerTests</string>
+	<string>com.shein-ks.sheinKosova</string>
 	<key>PROJECT_ID</key>
-	<string>student-food-takeaway</string>
+	<string>sh-kosova</string>
 	<key>STORAGE_BUCKET</key>
-	<string>student-food-takeaway.firebasestorage.app</string>
+	<string>sh-kosova.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:486355060056:ios:08519b83c8fde9910e112d</string>
+	<string>1:636085257748:ios:e7b41d9794b17656b54901</string>
 </dict>
 </plist>

@@ -246,14 +246,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   onPageChanged: (index) => provider.changeImage(index),
                   itemBuilder: (context, index) => GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FullScreenImageGallery(
-                            images: images,
-                            initialIndex: index,
-                          ),
-                        ),
+                      context.push(
+                        '/image-gallery',
+                        extra: {
+                          'images': images,
+                          'initialIndex': index,
+                        },
                       );
                     },
                     child: Container(
@@ -600,7 +598,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           rating: selectedRating,
                           comment: commentController.text,
                         );
-                        if (context.mounted) Navigator.pop(context);
+                        if (context.mounted) context.pop();
                       }
                     },
                     child: const Text("Submit Review"),

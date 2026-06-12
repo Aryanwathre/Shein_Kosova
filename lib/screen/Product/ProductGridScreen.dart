@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
@@ -102,12 +103,7 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                   return ProductCard(
                       onTap: () {
                         // Navigate to details screen, passing the productId
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailsScreen(product: product,),
-                          ),
-                        );
+                        context.push('/products/${product.id}', extra: product);
                       },
                       product: product, context: context);
                 },
@@ -154,21 +150,21 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                           title: const Text("Relevance"),
                           onTap: () {
                             provider.sortProducts("Relevance");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                         ListTile(
                           title: const Text("Price: Low to High"),
                           onTap: () {
                             provider.sortProducts("Price: Low to High");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                         ListTile(
                           title: const Text("Price: High to Low"),
                           onTap: () {
                             provider.sortProducts("Price: High to Low");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                       ],
@@ -194,7 +190,7 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                           title: const Text("All"),
                           onTap: () {
                             provider.filterByCategory("All");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                         // Assuming you have category IDs to filter by
@@ -202,21 +198,21 @@ class _ProductGridScreenState extends State<ProductGridScreen> {
                           title: const Text("Men"),
                           onTap: () {
                             provider.filterByCategory("mens-category-id");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                         ListTile(
                           title: const Text("Women"),
                           onTap: () {
                             provider.filterByCategory("womens-category-id");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                         ListTile(
                           title: const Text("Accessories"),
                           onTap: () {
                             provider.filterByCategory("accessories-category-id");
-                            Navigator.pop(context);
+                            context.pop();
                           },
                         ),
                       ],

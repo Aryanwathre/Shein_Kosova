@@ -130,7 +130,7 @@ Widget searchbarTextField(BuildContext context, TextEditingController controller
       InkWell(
 
         onTap: () {
-          Navigator.pop(context);
+          context.pop();
         },
         child: const Icon(Icons.arrow_back_ios_new_outlined),
       ),

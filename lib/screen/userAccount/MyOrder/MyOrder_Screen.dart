@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/order_model.dart';
 import 'package:shein_kosova/provider/orders_provider.dart';
@@ -78,12 +79,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   Widget buildOrderCard(BuildContext context, OrderModel order) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderDetailsScreen(order: order),
-          ),
-        );
+        context.push('/order-details', extra: order);
       },
       child: Card(
         elevation: 3,

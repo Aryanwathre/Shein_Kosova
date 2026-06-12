@@ -231,8 +231,8 @@ class ProductProvider extends ChangeNotifier {
     _selectedImageIndex = 0;
     _categoryProducts = [];
     _isLoading = false;
-
-    notifyListeners();
+    // Note: notifyListeners() is omitted here because this is called during dispose()
+    // and calling it would throw "setState() or markNeedsBuild() called when widget tree was locked".
   }
 
 

@@ -131,6 +131,8 @@ class TokenManager {
   static const String _configColorKey = 'config_color';
   static const String _codEnabledKey = 'cod_enabled';
   static const String _bankEnabledKey = 'bank_enabled';
+  static const String _cardEnabledKey = 'card_enabled';
+  static const String _upiEnabledKey = 'upi_enabled';
 
   static bool _isRefreshing = false;
   static final List<Function> _refreshCallbacks = [];
@@ -221,6 +223,12 @@ class TokenManager {
           if (paymentConfig.containsKey('bankEnabled')) {
             await _storage.setBool(_bankEnabledKey, paymentConfig['bankEnabled'] == true);
           }
+          if (paymentConfig.containsKey('cardEnabled')) {
+            await _storage.setBool(_cardEnabledKey, paymentConfig['cardEnabled'] == true);
+          }
+          if (paymentConfig.containsKey('upiEnabled')) {
+            await _storage.setBool(_upiEnabledKey, paymentConfig['upiEnabled'] == true);
+          }
         }
       }
       debugPrint('✅ TokenManager: Config data saved successfully');
@@ -243,6 +251,22 @@ class TokenManager {
       return await _storage.getBool(_bankEnabledKey);
     } catch (e) {
       debugPrint('❌ TokenManager: Error checking bank enabled: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> isCardEnabled() async {
+    try {
+      return await _storage.getBool(_cardEnabledKey);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> isUpiEnabled() async {
+    try {
+      return await _storage.getBool(_upiEnabledKey);
+    } catch (e) {
       return false;
     }
   }
@@ -346,6 +370,17 @@ abstract class BaseApi {
     while (retryCount <= maxRetries) {
       try {
         final headers = await TokenManager.getHeaders(requireAuth: requireAuth);
+
+        // 🔍 DEBUG: Log headers
+        debugPrint('📤 Request Headers:');
+        headers.forEach((key, value) {
+          if (key == 'Authorization') {
+            debugPrint('  $key: Bearer ${value.substring(7).substring(0, 20)}...');
+          } else {
+            debugPrint('  $key: $value');
+          }
+        });
+
         final response = await request(headers).timeout(AppConstants.requestTimeout);
 
         if ((response.statusCode == 401 || response.statusCode == 403) && requireAuth && retryCount == 0) {
@@ -408,14 +443,24 @@ abstract class BaseApi {
 
 class RegisterUserApi extends BaseApi {
   Future<ApiResponse<Map<String, dynamic>>> registerUser({
-    required String firstName, required String lastName, required String email, required String password,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? fcmToken,
   }) async {
     return makeRequest(
       requireAuth: false,
       request: (headers) => client.post(
         Uri.parse('${AppConstants.appApiLink}auth/register'),
         headers: headers,
-        body: jsonEncode({"firstName": firstName, "lastName": lastName, "email": email, "password": password}),
+        body: jsonEncode({
+          "firstName": firstName,
+          "lastName": lastName,
+          "email": email,
+          "password": password,
+          "fcmToken": fcmToken,
+        }),
       ),
       parser: (json) {
         final data = json['data'] ?? json;
@@ -430,13 +475,21 @@ class RegisterUserApi extends BaseApi {
 }
 
 class LoginUserApi extends BaseApi {
-  Future<ApiResponse<Map<String, dynamic>>> loginUser({required String email, required String password}) async {
+  Future<ApiResponse<Map<String, dynamic>>> loginUser({
+    required String email,
+    required String password,
+    String? fcmToken,
+  }) async {
     return makeRequest(
       requireAuth: false,
       request: (headers) => client.post(
         Uri.parse('${AppConstants.appApiLink}auth/login'),
         headers: headers,
-        body: jsonEncode({"email": email, "password": password}),
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+          "fcmToken": fcmToken,
+        }),
       ),
       parser: (json) {
         final data = json['data'] ?? json;
@@ -760,16 +813,25 @@ class WishlistApi extends BaseApi {
 }
 
 class OrdersApi extends BaseApi {
-  Future<ApiResponse<Map<String, dynamic>>> createOrder({required String addressId, required String paymentMethod}) async {
+  Future<ApiResponse<Map<String, dynamic>>> createOrder({
+    required String addressId,
+    required String paymentMethod,
+    String? couponCode,
+  }) async {
     return makeRequest(
       requireAuth: true,
       request: (headers) => client.post(
-        Uri.parse('${AppConstants.appApiLink}orders/create'),
+        Uri.parse('${AppConstants.appApiLink}checkout'),
         headers: headers,
-        body: jsonEncode({"addressId": addressId, "paymentMethod": paymentMethod}),
+        body: jsonEncode({
+          "addressId": addressId,
+          "paymentMethod": paymentMethod,
+          if (couponCode != null) "couponCode": couponCode,
+        }),
       ),
       parser: (json) => json is Map<String, dynamic> ? json : {'data': json},
     );
+
   }
 
   Future<ApiResponse<List<OrderModel>>> getOrders() async {
@@ -915,6 +977,23 @@ class FAQApi extends BaseApi {
   }
 }
 
+class CouponApi extends BaseApi {
+  Future<ApiResponse<Map<String, dynamic>>> validateCoupon(String code, double orderAmount) async {
+    return makeRequest(
+      requireAuth: true,
+      request: (headers) => client.post(
+        Uri.parse('${AppConstants.appApiLink}coupons/validate'),
+        headers: headers,
+        body: jsonEncode({
+          "code": code,
+          "orderAmount": orderAmount,
+        }),
+      ),
+      parser: (json) => json is Map<String, dynamic> ? json : {},
+    );
+  }
+}
+
 // ==================== API SERVICE MANAGER ====================
 class ApiServiceManager {
   static final ApiServiceManager _instance = ApiServiceManager._internal();
@@ -938,6 +1017,7 @@ class ApiServiceManager {
   final HomeApi homeApi = HomeApi();
   final ConfigApi configApi = ConfigApi();
   final FAQApi faqApi = FAQApi();
+  final CouponApi couponApi = CouponApi();
 
   Future<bool> isUserLoggedIn() async { return await TokenManager.isTokenValid(); }
   Future<Map<String, dynamic>?> getCurrentUser() async { return await TokenManager.getUserData(); }

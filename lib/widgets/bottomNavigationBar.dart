@@ -195,6 +195,7 @@ class _LandingPageState extends State<LandingPage> {
 
                 // Navigate if still mounted
                 if (mounted) {
+                  context.read<LandingProvider>().changePage(index);
                   context.go('/shop?index=$index');
                 }
               },

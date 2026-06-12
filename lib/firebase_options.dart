@@ -37,29 +37,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCKTRCBz48OWqQj16l-jCCEmA4vFzdsEzE',
-    appId: '1:486355060056:web:ba8cb30d67d5b0f10e112d',
-    messagingSenderId: '486355060056',
-    projectId: 'student-food-takeaway',
-    authDomain: 'student-food-takeaway.firebaseapp.com',
-    storageBucket: 'student-food-takeaway.firebasestorage.app',
-    measurementId: 'G-5TK4SHXBNS',
+    apiKey: 'AIzaSyBgcIvTBySVzCvHSlalh7Yyrmk6gUrVZa4',
+    appId: '1:636085257748:web:b30b36ba87571c6db54901',
+    messagingSenderId: '636085257748',
+    projectId: 'sh-kosova',
+    authDomain: 'sh-kosova.firebaseapp.com',
+    storageBucket: 'sh-kosova.firebasestorage.app',
+    measurementId: 'G-06P91TKDFG',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCJEkuaRVvyI-xULGpnW1KOK92p0tO9CwA',
-    appId: '1:486355060056:android:5fdb6520a011fb410e112d',
-    messagingSenderId: '486355060056',
-    projectId: 'student-food-takeaway',
-    storageBucket: 'student-food-takeaway.firebasestorage.app',
+    apiKey: 'AIzaSyCJVmfuw3DDUn0wNg0bocO-wl3qAZsMebI',
+    appId: '1:636085257748:android:596e8b8d78104c44b54901',
+    messagingSenderId: '636085257748',
+    projectId: 'sh-kosova',
+    storageBucket: 'sh-kosova.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAy5fzusIXjDHKbTww2zOTJh_I3GAJjyrs',
-    appId: '1:486355060056:ios:08519b83c8fde9910e112d',
-    messagingSenderId: '486355060056',
-    projectId: 'student-food-takeaway',
-    storageBucket: 'student-food-takeaway.firebasestorage.app',
-    iosBundleId: 'com.example.sheinKosova.RunnerTests',
+    apiKey: 'AIzaSyDzD3E178MKQETZ0tnmuxSDKAVuRuDCXJM',
+    appId: '1:636085257748:ios:e7b41d9794b17656b54901',
+    messagingSenderId: '636085257748',
+    projectId: 'sh-kosova',
+    storageBucket: 'sh-kosova.firebasestorage.app',
+    iosBundleId: 'com.shein-ks.sheinKosova',
   );
 }

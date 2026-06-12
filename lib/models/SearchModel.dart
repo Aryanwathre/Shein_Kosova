@@ -33,13 +33,13 @@ class SearchResponseModel {
           ?.map((item) => ProductModel.fromJson(item))
           .toList() ??
           [],
-      pageable: Pageable.fromJson(json['pageable'] ?? {}),
+      pageable: Pageable.fromJson(json['pageable'] is Map ? json['pageable'] : {}),
       totalPages: json['totalPages'] ?? 0,
       totalElements: json['totalElements'] ?? 0,
       last: json['last'] ?? false,
       size: json['size'] ?? 0,
       number: json['number'] ?? 0,
-      sort: Sort.fromJson(json['sort'] ?? {}),
+      sort: Sort.fromJson(json['sort']),
       numberOfElements: json['numberOfElements'] ?? 0,
       first: json['first'] ?? false,
       empty: json['empty'] ?? false,
@@ -82,7 +82,7 @@ class Pageable {
     return Pageable(
       pageNumber: json['pageNumber'] ?? 0,
       pageSize: json['pageSize'] ?? 0,
-      sort: Sort.fromJson(json['sort'] ?? {}),
+      sort: Sort.fromJson(json['sort']),
       offset: json['offset'] ?? 0,
       paged: json['paged'] ?? false,
       unpaged: json['unpaged'] ?? false,
@@ -110,11 +110,18 @@ class Sort {
     required this.unsorted,
   });
 
-  factory Sort.fromJson(Map<String, dynamic> json) {
+  factory Sort.fromJson(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return Sort(
+        sorted: json['sorted'] ?? false,
+        empty: json['empty'] ?? false,
+        unsorted: json['unsorted'] ?? false,
+      );
+    }
     return Sort(
-      sorted: json['sorted'] ?? false,
-      empty: json['empty'] ?? false,
-      unsorted: json['unsorted'] ?? false,
+      sorted: json is List && json.isNotEmpty,
+      empty: json is List ? json.isEmpty : true,
+      unsorted: json is List ? false : true,
     );
   }
 

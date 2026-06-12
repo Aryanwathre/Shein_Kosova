@@ -1,5 +1,6 @@
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
@@ -65,7 +66,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     );
 
     if (mounted) {
-      if (success) Navigator.pop(context);
+      if (success) context.pop();
     }
   }
 

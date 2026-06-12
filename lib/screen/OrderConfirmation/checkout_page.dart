@@ -18,8 +18,8 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _couponController = TextEditingController();
   String selectedShipping = "standard";
-  String selectedPayment = "cod";
 
 
   /// When true → hide total amount and expand button
@@ -40,6 +40,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final addressProvider = context.read<AddressProvider>();
       final checkoutProvider = context.read<CheckoutProvider>();
       final configProvider = context.read<ConfigProvider>();
+      final cartProvider = context.read<CartProvider>();
+
+      // If cart is empty, clear any existing coupon state
+      if (cartProvider.items.isEmpty) {
+        checkoutProvider.removeCoupon();
+      }
+
+      // Sync coupon field if already applied
+      if (checkoutProvider.appliedCoupon != null) {
+        _couponController.text = checkoutProvider.appliedCoupon!['code'] ?? "";
+      }
 
       // Ensure addresses are fetched
       if (addressProvider.addresses.isEmpty) {
@@ -59,12 +70,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
         // Set in CheckoutProvider
         checkoutProvider.setAddress(defaultAddress);
       }
-
-      // Initialize default payment method based on config
-      if (!configProvider.codEnabled && configProvider.bankEnabled) {
-        setState(() {
-          selectedPayment = "bank";
-        });
+      // Select first available payment method if current one is disabled
+      if (!configProvider.enabledMethods.contains(checkoutProvider.paymentMethod)) {
+        if (configProvider.enabledMethods.isNotEmpty) {
+          checkoutProvider.setPayment(configProvider.enabledMethods.first);
+        } else if (checkoutProvider.paymentMethods.isNotEmpty) {
+          // Fallback to first available hardcoded method if server ones are off
+          for (var method in checkoutProvider.paymentMethods) {
+            if (!["COD", "CARD"].contains(method)) {
+               checkoutProvider.setPayment(method);
+               break;
+            }
+          }
+        }
       }
     });
   }
@@ -123,7 +141,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     : Row(
                   children: [
                     styledPrice(
-                      cart.totalAmount,
+                      checkout.getTotalWithDiscount(cart.totalAmount),
                       fontSize: 24,
                     ),
                     const SizedBox(width: 50),
@@ -137,11 +155,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   curve: Curves.easeInOut,
                   padding: const EdgeInsets.only(left: 8),
                   child: GestureDetector(
-                    onTap: () async{
+                    onTap: () async {
+                      if (checkout.isPlacingOrder) return;
                       final success = await checkout.placeOrder();
                       if (success) {
                         if (context.mounted) {
-                          context.pushReplacement('/order-success');
+                          // Check if there's a payment redirect URL
+                          if (checkout.redirectUrl != null && checkout.redirectUrl!.isNotEmpty) {
+                            debugPrint('💳 Navigating to payment gateway...');
+                            context.pushNamed(
+                              'payment',
+                              queryParameters: {
+                                'redirectUrl': checkout.redirectUrl!,
+                                'orderId': checkout.orderId ?? '',
+                              },
+                            );
+                          } else {
+                            // As requested: if redirectUrl is null, show an error snackbar and don't proceed to success page
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Can't place order at the moment")),
+                            );
+                          }
                         }
                       } else {
                         if (context.mounted) {
@@ -157,14 +191,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.black,
+                        color: checkout.isPlacingOrder ? Colors.grey : AppColors.black,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Text(
-                        "Order and Pay",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w700),
-                      ),
+                      child: checkout.isPlacingOrder
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              "Order and Pay",
+                              style: TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.w700),
+                            ),
                     ),
                   ),
                 ),
@@ -194,12 +237,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
            // const SizedBox(height: 20),
 
 
-           _paymentMethod(config),
+           _paymentMethod(config, checkout),
+           const SizedBox(height: 20),
+
+           _couponSection(checkout, cart.totalAmount),
            const SizedBox(height: 20),
 
            Container(
              key: priceBreakKey,
-             child: _priceDetails(cart),
+             child: _priceDetails(cart, checkout),
            ),
          ],
        ),
@@ -230,7 +276,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             children: [
               _sectionTitle("Shipping Address"),
               TextButton(
-                onPressed: () => _openAddressSelector(context, addressProvider, checkoutProvider),
+                onPressed: (checkoutProvider.isPlacingOrder || checkoutProvider.isValidatingCoupon)
+                    ? null
+                    : () => _openAddressSelector(context, addressProvider, checkoutProvider),
                 child: const Text("Change"),
               )
             ],
@@ -384,44 +432,151 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _paymentMethod(ConfigProvider config) {
+  Widget _paymentMethod(ConfigProvider config, CheckoutProvider checkout) {
+    // Build a merged list of methods to display:
+    // - server driven methods based on config (COD, CARD)
+    final List<Map<String, String>> methods = [];
+
+    if (config.codEnabled) {
+      methods.add({'value': 'COD', 'label': 'Cash on Delivery'});
+    }
+
+    if (config.cardEnabled) {
+      methods.add({'value': 'CARD', 'label': 'Card Payment'});
+    }
+
+    // Add any other provider methods that might not be in config yet but are in checkoutProvider
+    for (final m in checkout.paymentMethods) {
+      if (m == 'COD' || m == 'CARD') continue;
+      methods.add({'value': m, 'label': m});
+    }
+
+    if (methods.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: _boxDecoration(),
+        child: const Text(
+          "No payment methods available at the moment.",
+          style: TextStyle(color: Colors.red, fontSize: 12),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _boxDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           _sectionTitle("Payment Method"),
+          ...methods.map((m) {
+            return RadioListTile<String>(
+              value: m['value']!,
+              groupValue: checkout.paymentMethod,
+              onChanged: (checkout.isPlacingOrder || checkout.isValidatingCoupon)
+                  ? null
+                  : (val) {
+                      if (val == null) return;
+                      checkout.setPayment(val);
+                      // local setState not required for provider, but if you used any local UI state you can call setState(() {});
+                    },
+              title: Text(m['label']!, style: TextStyle(color: AppColors.textDark)),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
 
-          if (config.codEnabled)
-            RadioListTile(
-              value: "cod",
-              groupValue: selectedPayment,
-              onChanged: (val) {
-                setState(() => selectedPayment = val.toString());
-              },
-              title: Text("Cash on Delivery",
-                  style: TextStyle(color: AppColors.textDark)),
-            ),
+  Widget _couponSection(CheckoutProvider checkout, double subtotal) {
+    final bool isApplied = checkout.appliedCoupon != null;
 
-          if (config.bankEnabled)
-            RadioListTile(
-              value: "bank",
-              groupValue: selectedPayment,
-              onChanged: (val) {
-                setState(() => selectedPayment = val.toString());
-              },
-              title: Text("Bank Transfer",
-                  style: TextStyle(color: AppColors.textDark)),
-            ),
-
-          if (!config.codEnabled && !config.bankEnabled)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isApplied ? Colors.green.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isApplied ? Colors.green : Colors.transparent,
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle("Coupon Code"),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _couponController,
+                  enabled: !isApplied && !checkout.isValidatingCoupon && !checkout.isPlacingOrder,
+                  decoration: InputDecoration(
+                    hintText: "Enter coupon code",
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: isApplied ? Colors.green.shade100 : Colors.grey.shade100,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              if (isApplied)
+                IconButton(
+                  onPressed: (checkout.isPlacingOrder || checkout.isValidatingCoupon)
+                      ? null
+                      : () {
+                          checkout.removeCoupon();
+                          _couponController.clear();
+                        },
+                  icon: const Icon(Icons.clear, color: Colors.red),
+                )
+              else
+                ElevatedButton(
+                  onPressed: checkout.isValidatingCoupon
+                      ? null
+                      : () async {
+                    if (_couponController.text.trim().isEmpty) return;
+                    final success = await checkout.validateAndApplyCoupon(
+                      _couponController.text.trim(),
+                      subtotal,
+                    );
+                    if (!success && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(checkout.couponErrorMessage ?? "Invalid coupon")),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: checkout.isValidatingCoupon
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                      : const Text("Apply"),
+                ),
+            ],
+          ),
+          if (isApplied)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
               child: Text(
-                "No payment methods available at the moment.",
-                style: TextStyle(color: Colors.red, fontSize: 12),
+                "Coupon '${checkout.appliedCoupon!['code']}' applied successfully!",
+                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
         ],
@@ -429,7 +584,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _priceDetails(CartProvider cart) {
+  Widget _priceDetails(CartProvider cart, CheckoutProvider checkout) {
+    final double discount = checkout.appliedCoupon != null
+        ? (double.tryParse(checkout.appliedCoupon!['discountAmount'].toString()) ?? 0)
+        : 0;
+    final double grandTotal = checkout.getTotalWithDiscount(cart.totalAmount);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _boxDecoration(),
@@ -440,14 +600,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
           _sectionTitle("Price Breakdown"),
           _priceRow("Subtotal", cart.totalAmount),
           _priceRow("Shipping", 0),
+          if (discount > 0)
+            _priceRow("Discount", -discount, color: Colors.green),
           const Divider(),
-          _priceRow("Grand Total", cart.totalAmount, bold: true),
+          _priceRow("Grand Total", grandTotal, bold: true),
         ],
       ),
     );
   }
 
-  Widget _priceRow(String title, double value, {bool bold = false}) {
+  Widget _priceRow(String title, double value, {bool bold = false, Color color = Colors.black}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -456,8 +618,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Text(title,
               style: TextStyle(
                   fontWeight:
-                  bold ? FontWeight.bold : FontWeight.normal)),
-          styledPrice(value, color: Colors.black),
+                  bold ? FontWeight.bold : FontWeight.normal,
+                  color: color
+              )),
+          styledPrice(value, color: color),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/search_provider.dart';
 import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
@@ -75,7 +76,7 @@ _searchController.dispose();
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const Icon(Icons.error_outline, size: 64, color: Colors.green),
               const SizedBox(height: 16),
               const Text(
                 'Search failed',
@@ -131,12 +132,7 @@ _searchController.dispose();
             ),
             subtitle: styledPrice(product.price),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProductDetailsScreen(product: product),
-                ),
-              );
+              context.push('/products/${product.id}', extra: product);
             },
           );
         },

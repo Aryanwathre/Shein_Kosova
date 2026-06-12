@@ -21,6 +21,19 @@ class ConfigProvider extends ChangeNotifier {
   bool _bankEnabled = false;
   bool get bankEnabled => _bankEnabled;
 
+  bool _cardEnabled = false;
+  bool get cardEnabled => _cardEnabled;
+
+  bool _upiEnabled = false;
+  bool get upiEnabled => _upiEnabled;
+
+  List<String> get enabledMethods {
+    final List<String> methods = [];
+    if (_codEnabled) methods.add("COD");
+    if (_cardEnabled) methods.add("CARD");
+    return methods;
+  }
+
   Future<void> loadConfig() async {
     _state = ConfigState.loading;
     notifyListeners();
@@ -37,6 +50,8 @@ class ConfigProvider extends ChangeNotifier {
         // Update local state
         _codEnabled = await TokenManager.isCodEnabled();
         _bankEnabled = await TokenManager.isBankEnabled();
+        _cardEnabled = await TokenManager.isCardEnabled();
+        _upiEnabled = await TokenManager.isUpiEnabled();
         
         _state = ConfigState.loaded;
         debugPrint('✅ Config loaded successfully: $_configData');

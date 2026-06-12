@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/services/api_service.dart';
 import 'package:shein_kosova/services/notification_service.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
@@ -52,9 +53,13 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setState(AuthState.loading);
 
+      // Get FCM token
+      String? fcmToken = await NotificationService().getToken();
+
       final response = await _apiManager.loginApi.loginUser(
         email: email,
         password: password,
+        fcmToken: fcmToken,
       );
 
       if (response.success) {
@@ -87,11 +92,15 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setState(AuthState.loading);
 
+      // Get FCM token
+      String? fcmToken = await NotificationService().getToken();
+
       final response = await _apiManager.registerApi.registerUser(
         firstName: firstName,
         lastName: lastName,
         email: email,
         password: password,
+        fcmToken: fcmToken,
       );
 
       if (response.success) {
@@ -103,7 +112,7 @@ class AuthProvider extends ChangeNotifier {
         NotificationService().refreshAndSaveToken();
 
         if (context.mounted) {
-           Navigator.pop(context, true);
+           context.pop(true);
         }
         return true;
       } else {
@@ -166,11 +175,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _apiManager.logout();
       if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LandingPage(selectedIndex: 0)),
-          (route) => false,
-        );
+        context.go('/shop');
       }
 
     } catch (e) {

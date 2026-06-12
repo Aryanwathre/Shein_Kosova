@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class FullScreenImageGallery extends StatefulWidget {
   final List<String> images;
@@ -58,7 +59,7 @@ class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
             left: 16,
             child: IconButton(
               icon: const Icon(Icons.close, size: 30),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
             ),
           ),
 

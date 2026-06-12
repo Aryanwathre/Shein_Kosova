@@ -31,11 +31,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () => ctx.pop(false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => ctx.pop(true),
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
@@ -250,13 +250,13 @@ class _ProfileMenu extends StatelessWidget {
             context.push('/wishlist');
           },
         ),
-        _MenuTile(
-          icon: Icons.notifications_none,
-          title: "Notifications",
-          onTap: () {
-            context.push('/notifications');
-          },
-        ),
+        // _MenuTile(
+        //   icon: Icons.notifications_none,
+        //   title: "Notifications",
+        //   onTap: () {
+        //     context.push('/notifications');
+        //   },
+        // ),
         const Divider(),
         _MenuTile(
           icon: Icons.location_on_outlined,

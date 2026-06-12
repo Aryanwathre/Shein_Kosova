@@ -7,6 +7,7 @@ import 'package:shein_kosova/screen/Auth/login_screen.dart';
 import 'package:shein_kosova/screen/Auth/register_screen.dart';
 import 'package:shein_kosova/screen/OrderConfirmation/OrderPlacedSuccess.dart';
 import 'package:shein_kosova/screen/OrderConfirmation/checkout_page.dart';
+import 'package:shein_kosova/screen/Payment/paymentProcessing.dart';
 import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
 import 'package:shein_kosova/screen/Search/searchScreen.dart';
 import 'package:shein_kosova/screen/Search/searchesultScreen.dart';
@@ -21,9 +22,9 @@ import 'package:shein_kosova/screen/userAccount/MyOrder/MyOrder_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/MyOrder/order_details_screen.dart';
 import 'package:shein_kosova/screen/userAccount/Notification_Screen.dart';
 import 'package:shein_kosova/screen/userAccount/Wishlist_Screen.dart';
-import 'package:shein_kosova/screen/userAccount/profile/Profile.dart';
 import 'package:shein_kosova/screen/userAccount/profile/edit_profile_screen.dart';
 import 'package:shein_kosova/screen/userAccount/profile/change_password_screen.dart';
+import 'package:shein_kosova/widgets/FullScreenImageViewer.dart';
 import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 class AppRoutes {
@@ -45,12 +46,14 @@ class AppRoutes {
   static const String editProfile = '/edit-profile';
   static const String changePassword = '/change-password';
   static const String checkout = '/checkout';
+  static const String payment = '/payment';
   static const String orderPlacedSuccess = '/order-success';
   static const String search = '/search';
   static String termsAndConditions = '/terms-and-conditions';
   static String privacyPolicy = '/privacy-policy';
   static const String cart = '/cart';
   static const String profile = '/profile';
+  static const String imageGallery = '/image-gallery';
 
   static final GoRouter router = GoRouter(
     initialLocation: splash,
@@ -167,17 +170,41 @@ class AppRoutes {
         path: changePassword,
         builder: (context, state) => const ChangePasswordScreen(),
       ),
-      GoRoute(
-        path: checkout,
-        builder: (context, state) => const CheckoutPage(),
-      ),
-      GoRoute(
-        path: orderPlacedSuccess,
-        builder: (context, state) => const OrderSuccessPage(),
-      ),
+       GoRoute(
+         path: checkout,
+         builder: (context, state) => const CheckoutPage(),
+       ),
+       GoRoute(
+         path: payment,
+         name: 'payment',
+         builder: (context, state) {
+           final redirectUrl = state.uri.queryParameters['redirectUrl'] ?? '';
+           final orderId = state.uri.queryParameters['orderId'] ?? '';
+           return PaymentProcessingPage(
+             redirectUrl: redirectUrl,
+             orderId: orderId,
+           );
+         },
+       ),
+       GoRoute(
+         path: orderPlacedSuccess,
+         builder: (context, state) => const OrderSuccessPage(),
+       ),
       GoRoute(
         path: search,
         builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: imageGallery,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          final images = extra['images'] as List<String>;
+          final initialIndex = extra['initialIndex'] as int;
+          return FullScreenImageGallery(
+            images: images,
+            initialIndex: initialIndex,
+          );
+        },
       ),
     ],
   );

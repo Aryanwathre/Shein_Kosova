@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/UserProfile.dart';
 import 'package:shein_kosova/provider/Profile_provider.dart';
@@ -62,7 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated successfully!')),
           );
-          Navigator.of(context).pop(); // Go back to the profile screen
+          context.pop(); // Go back to the profile screen
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

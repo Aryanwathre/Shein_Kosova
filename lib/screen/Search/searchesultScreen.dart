@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -301,7 +302,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.white,
-          leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+          leading: IconButton(icon: const Icon(Icons.close), onPressed: () => context.pop()),
           centerTitle: true,
           title: const Text("Filter", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         ),
@@ -340,7 +341,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     searchProvider.search();
-                    Navigator.pop(context);
+                    context.pop();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
@@ -594,7 +595,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   Future _showQuickAdd(BuildContext context, ProductModel product) {
     final provider = Provider.of<SearchProvider>(context, listen: false);
     provider.fetchProductDetails(product.id.toString());
-    final TextEditingController colorController = TextEditingController();
 
     return showModalBottomSheet(
       context: context,
@@ -602,205 +602,252 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        return Consumer<SearchProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoadingProductDetails || provider.selectedProductDetails == null) {
-              return Padding(
-                padding: const EdgeInsets.all(25),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    ShimmerWidget.rectangular(height: 150),
-                    SizedBox(height: 15),
-                    ShimmerWidget.rectangular(height: 20, width: 200),
-                    SizedBox(height: 10),
-                    ShimmerWidget.rectangular(height: 45),
-                  ],
-                ),
-              );
-            }
-
-            final detail = provider.selectedProductDetails!;
-            if (colorController.text.isEmpty && detail.colors != null) {
-              colorController.text = detail.colors!;
-            }
-
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
-                    const SizedBox(height: 20),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: detail.mainImageUrl.isEmpty
-                              ? Container(
-                                  height: 120,
-                                  width: 90,
-                                  color: Colors.grey[200],
-                                  child: const Icon(Icons.broken_image, color: Colors.grey),
-                                )
-                              : CachedNetworkImage(
-                                  imageUrl: detail.mainImageUrl,
-                                  height: 120,
-                                  width: 90,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 90),
-                                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                                ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              styledPrice(detail.price, color: Colors.orange, fontSize: 20),
-                              const SizedBox(height: 4),
-                              Text(detail.name, style: const TextStyle(fontSize: 14, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    if (detail.sizes != null && detail.sizes!.isNotEmpty) ...[
-                      ...(detail.sizes!.where((size) => size.trim().isNotEmpty).map((size) => size.trim()).toList()).isEmpty
-                          ? []
-                          : [
-                              const Text("Size", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 12,
-                                runSpacing: 12,
-                                children: detail.sizes!
-                                    .where((size) => size.trim().isNotEmpty)
-                                    .map((size) => size.trim())
-                                    .toList()
-                                    .map((size) {
-                                  final isSelected = provider.selectedSize == size;
-                                  return GestureDetector(
-                                    onTap: () => provider.selectSize(size),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isSelected ? Colors.black : Colors.white,
-                                        border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(size, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 20),
-                            ]
-                    ],
-                    const Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: colorController,
-                      decoration: InputDecoration(
-                        hintText: "Enter color",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Text("Quantity", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        const Spacer(),
-                        Container(
-                          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(4)),
-                          child: Row(
-                            children: [
-                              IconButton(onPressed: provider.decreaseQuantity, icon: const Icon(Icons.remove, size: 20)),
-                              Text("${provider.quantity}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              IconButton(onPressed: provider.increaseQuantity, icon: const Icon(Icons.add, size: 20)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final authProvider = context.read<AuthProvider>();
-                          if (authProvider.state != AuthState.authenticated) {
-                            await showLoginPrompt(context);
-                            if (!mounted) return;
-                            if (authProvider.state != AuthState.authenticated) return;
-                          }
-
-                          final cleanedSizes = (detail.sizes ?? [])
-                              .where((size) => size.trim().isNotEmpty)
-                              .toList();
-
-                          final bool isMulticolor = detail.colors?.toLowerCase() == 'multicolor';
-                          final colorInput = isMulticolor ? colorController.text.trim() : detail.colors ?? '';
-
-                          if (cleanedSizes.isNotEmpty) {
-                            if (provider.selectedSize == null) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
-                              }
-                              return;
-                            }
-                            
-                            if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please specify a color for this product!")));
-                              }
-                              return;
-                            }
-                          }
-
-                          final success = await context.read<CartProvider>().addToCart(
-                            productId: detail.id, 
-                            quantity: provider.quantity, 
-                            sizes: provider.selectedSize ?? '',
-                            color: colorInput,
-                          );
-                          
-                          if (!mounted) return;
-
-                          if (success) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        ),
-                        child: const Text("ADD TO BAG", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
+        return _QuickAddSheet(product: product);
       },
     ).then((_) {
-      colorController.dispose();
       provider.resetQuantity();
     });
   }
 }
+
+class _QuickAddSheet extends StatefulWidget {
+  final ProductModel product;
+  const _QuickAddSheet({required this.product});
+
+  @override
+  State<_QuickAddSheet> createState() => _QuickAddSheetState();
+}
+
+class _QuickAddSheetState extends State<_QuickAddSheet> {
+  late TextEditingController _colorController;
+
+  @override
+  void initState() {
+    super.initState();
+    _colorController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _colorController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SearchProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoadingProductDetails || provider.selectedProductDetails == null) {
+          return Padding(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                ShimmerWidget.rectangular(height: 150),
+                SizedBox(height: 15),
+                ShimmerWidget.rectangular(height: 20, width: 200),
+                SizedBox(height: 10),
+                ShimmerWidget.rectangular(height: 45),
+              ],
+            ),
+          );
+        }
+
+        final detail = provider.selectedProductDetails!;
+        if (_colorController.text.isEmpty && detail.colors != null) {
+          _colorController.text = detail.colors!;
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Center(
+                      child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+                  const SizedBox(height: 20),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: detail.mainImageUrl.isEmpty
+                            ? Container(
+                                height: 120,
+                                width: 90,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                              )
+                            : CachedNetworkImage(
+                                imageUrl: detail.mainImageUrl,
+                                height: 120,
+                                width: 90,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 90),
+                                errorWidget: (context, url, error) => const Icon(Icons.error),
+                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            styledPrice(detail.price, color: Colors.orange, fontSize: 20),
+                            const SizedBox(height: 4),
+                            Text(detail.name,
+                                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  if (detail.sizes != null && detail.sizes!.isNotEmpty) ...[
+                    ...(detail.sizes!.where((size) => size.trim().isNotEmpty).map((size) => size.trim()).toList())
+                            .isEmpty
+                        ? []
+                        : [
+                            const Text("Size", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: detail.sizes!
+                                  .where((size) => size.trim().isNotEmpty)
+                                  .map((size) => size.trim())
+                                  .toList()
+                                  .map((size) {
+                                final isSelected = provider.selectedSize == size;
+                                return GestureDetector(
+                                  onTap: () => provider.selectSize(size),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.black : Colors.white,
+                                      border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(size,
+                                        style: TextStyle(
+                                            color: isSelected ? Colors.white : Colors.black,
+                                            fontWeight: FontWeight.bold)),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 20),
+                          ]
+                  ],
+                  const Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _colorController,
+                    decoration: InputDecoration(
+                      hintText: "Enter color",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Text("Quantity", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const Spacer(),
+                      Container(
+                        decoration:
+                            BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(4)),
+                        child: Row(
+                          children: [
+                            IconButton(onPressed: provider.decreaseQuantity, icon: const Icon(Icons.remove, size: 20)),
+                            Text("${provider.quantity}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            IconButton(onPressed: provider.increaseQuantity, icon: const Icon(Icons.add, size: 20)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final authProvider = context.read<AuthProvider>();
+                        if (authProvider.state != AuthState.authenticated) {
+                          await showLoginPrompt(context);
+                          if (!mounted) return;
+                          if (authProvider.state != AuthState.authenticated) return;
+                        }
+
+                        final cleanedSizes = (detail.sizes ?? []).where((size) => size.trim().isNotEmpty).toList();
+
+                        final bool isMulticolor = detail.colors?.toLowerCase() == 'multicolor';
+                        final colorInput = isMulticolor ? _colorController.text.trim() : detail.colors ?? '';
+
+                        if (cleanedSizes.isNotEmpty) {
+                          if (provider.selectedSize == null) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a size")));
+                            }
+                            return;
+                          }
+
+                          if (isMulticolor && (colorInput.isEmpty || colorInput.toLowerCase() == 'multicolor')) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Please specify a color for this product!")));
+                            }
+                            return;
+                          }
+                        }
+
+                        final success = await context.read<CartProvider>().addToCart(
+                              productId: detail.id,
+                              quantity: provider.quantity,
+                              sizes: provider.selectedSize ?? '',
+                              color: colorInput,
+                            );
+
+                        if (!mounted) return;
+
+                        if (success) {
+                          context.pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Added ${detail.name} to cart"), backgroundColor: Colors.green));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      ),
+                      child: const Text("ADD TO BAG", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 
 class ProductListCard extends StatelessWidget {
   final ProductModel product;

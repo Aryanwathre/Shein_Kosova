@@ -191,7 +191,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => context.go('/home'),
+                onPressed: () => context.go('/shop'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
@@ -221,13 +221,13 @@ class _CartItemTile extends StatelessWidget {
         content: Text("Are you sure you want to remove '${item.name}' from your cart?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
               provider.removeFromCart(cartItemId);
-              Navigator.pop(context);
+              context.pop();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text("Remove"),
@@ -345,13 +345,13 @@ class _CartItemTileDesktop extends StatelessWidget {
         content: Text("Are you sure you want to remove '${item.name}' from your cart?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
               provider.removeFromCart(cartItemId);
-              Navigator.pop(context);
+              context.pop();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text("Remove"),
@@ -578,7 +578,7 @@ class _OrderSummarySidebar extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => context.go('/home'),
+              onPressed: () => context.go('/shop'),
               child: const Text('Continue Shopping'),
             ),
           ),

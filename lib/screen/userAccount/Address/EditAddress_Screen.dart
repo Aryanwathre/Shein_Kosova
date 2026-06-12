@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
@@ -94,7 +95,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.pop(context);
+      context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
