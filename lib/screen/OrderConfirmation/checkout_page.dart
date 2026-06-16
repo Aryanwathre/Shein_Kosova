@@ -171,10 +171,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               },
                             );
                           } else {
-                            // As requested: if redirectUrl is null, show an error snackbar and don't proceed to success page
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Can't place order at the moment")),
-                            );
+                            // If redirectUrl is null but success is true, it means the order is placed (e.g. COD)
+                            debugPrint('✅ Order placed successfully. Navigating to success page...');
+                            
+                            // Clear the cart since the order is successfully placed
+                            context.read<CartProvider>().clearCart();
+
+                            context.go('/order-success');
                           }
                         }
                       } else {
@@ -433,19 +436,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _paymentMethod(ConfigProvider config, CheckoutProvider checkout) {
-    // Build a merged list of methods to display:
-    // - server driven methods based on config (COD, CARD)
     final List<Map<String, String>> methods = [];
 
     if (config.codEnabled) {
       methods.add({'value': 'COD', 'label': 'Cash on Delivery'});
     }
 
-    if (config.cardEnabled) {
+    if (config.bankEnabled) {
       methods.add({'value': 'CARD', 'label': 'Card Payment'});
     }
 
-    // Add any other provider methods that might not be in config yet but are in checkoutProvider
+    // Add any other provider methods that might be in checkoutProvider but not in config
     for (final m in checkout.paymentMethods) {
       if (m == 'COD' || m == 'CARD') continue;
       methods.add({'value': m, 'label': m});
@@ -480,9 +481,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       checkout.setPayment(val);
                       // local setState not required for provider, but if you used any local UI state you can call setState(() {});
                     },
-              title: Text(m['label']!, style: TextStyle(color: AppColors.textDark)),
+              title: Text(m['label']!, style: const TextStyle(color: AppColors.textDark)),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

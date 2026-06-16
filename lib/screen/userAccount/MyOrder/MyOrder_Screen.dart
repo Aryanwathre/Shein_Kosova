@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/order_model.dart';
 import 'package:shein_kosova/provider/orders_provider.dart';
-import 'package:shein_kosova/screen/userAccount/MyOrder/order_details_screen.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
@@ -16,10 +15,34 @@ class MyOrdersScreen extends StatefulWidget {
 }
 
 class _MyOrdersScreenState extends State<MyOrdersScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-      Provider.of<OrdersProvider>(context, listen: false).getAllOrders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrdersProvider>(context, listen: false).getAllOrders(refresh: true);
+    });
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
+      if (!ordersProvider.isLoadingMore && !ordersProvider.isLastPage) {
+        ordersProvider.loadMoreOrders();
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await Provider.of<OrdersProvider>(context, listen: false).getAllOrders(refresh: true);
   }
 
   @override
@@ -29,14 +52,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("My Orders")),
-      body: ordersProvider.state == CheckoutState.loading
+      body: ordersProvider.state == CheckoutState.loading && orders.isEmpty
           ? ListView.separated(
               padding: const EdgeInsets.all(8),
               itemCount: 5,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) => const ShimmerWidget.rectangular(height: 150),
             )
-          : ordersProvider.state == CheckoutState.error
+          : ordersProvider.state == CheckoutState.error && orders.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -55,7 +78,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => ordersProvider.getAllOrders(),
+                    onPressed: () => ordersProvider.getAllOrders(refresh: true),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
                   ),
@@ -63,16 +86,35 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               ),
             )
           : orders.isEmpty
-          ? const Center(child: Text("No orders found"))
-          : ListView.separated(
-        padding: const EdgeInsets.all(8),
-        itemCount: orders.length,
-        separatorBuilder: (_, __) => const Divider(),
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return buildOrderCard(context, order);
-        },
-      ),
+          ? RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView(
+                children: const [
+                  SizedBox(height: 200),
+                  Center(child: Text("No orders found")),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView.separated(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(8),
+                itemCount: orders.length + (ordersProvider.isLoadingMore ? 1 : 0),
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  if (index < orders.length) {
+                    final order = orders[index];
+                    return buildOrderCard(context, order);
+                  } else {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                },
+              ),
+            ),
     );
   }
 
@@ -266,6 +308,4 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         return Colors.grey;
     }
   }
-
-
 }

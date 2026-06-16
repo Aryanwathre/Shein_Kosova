@@ -30,17 +30,49 @@ class OrderDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Order ID: #${order.orderId}",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Ordered on ${DateFormat('dd MMM yyyy').format(order.createdAt)}",
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Order ID: #${order.orderId}",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      _buildStatusChip(order.status),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  _buildStatusChip(order.status),
+                  Text(
+                    "Ordered on ${DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt)}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                  if (order.estimatedDeliveryDate != null || order.estimatedDeliveryDate.toString().isEmpty  )
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delivery_dining, size: 18, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Estimated Delivery: ${DateFormat('dd MMM yyyy').format(order.estimatedDeliveryDate!)}",
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (order.deliveredAt != null || order.deliveredAt.toString().isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle, size: 18, color: Colors.green),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Delivered on: ${DateFormat('dd MMM yyyy').format(order.deliveredAt!)}",
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.green),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -63,7 +95,13 @@ class OrderDetailsScreen extends StatelessWidget {
                   Text("${order.address.city}, ${order.address.state} ${order.address.postalCode}"),
                   Text(order.address.country),
                   const SizedBox(height: 4),
-                  Text("Phone: ${order.address.contactNumber}"),
+                  Row(
+                    children: [
+                      const Icon(Icons.phone, size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text("Phone: ${order.address.contactNumber}"),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -74,17 +112,17 @@ class OrderDetailsScreen extends StatelessWidget {
               title: "Payment Information",
               content: Row(
                 children: [
-                  Icon(Icons.payment, size: 20, color: Colors.grey[700]),
+                  Icon(Icons.payment, size: 24, color: Colors.grey[700]),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        order.paymentStatus.toUpperCase(),
+                        order.paymentMethod ?? 'N/A',
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        "Status: ${order.paymentStatus}",
+                        "Status: ${order.paymentStatus ?? 'N/A'}",
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                     ],
@@ -115,25 +153,25 @@ class OrderDetailsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           child: item.productMainImageUrl.isEmpty
                               ? Container(
-                                  width: 70,
-                                  height: 90,
+                                  width: 80,
+                                  height: 100,
                                   color: Colors.grey[200],
                                   child: const Icon(Icons.broken_image, color: Colors.grey),
                                 )
                               : CachedNetworkImage(
                                   imageUrl: item.productMainImageUrl,
-                                  width: 70,
-                                  height: 90,
+                                  width: 80,
+                                  height: 100,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
-                                    width: 70,
-                                    height: 90,
+                                    width: 80,
+                                    height: 100,
                                     color: Colors.grey[200],
                                     child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                                   ),
                             errorWidget: (context, url, error) => Container(
-                              width: 70,
-                              height: 90,
+                              width: 80,
+                              height: 100,
                               color: Colors.grey[200],
                               child: const Icon(Icons.broken_image, color: Colors.grey),
                             ),
@@ -146,30 +184,52 @@ class OrderDetailsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 item.productName,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
+                                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Size: ${item.size}",
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  if (item.size.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        "Size: ${item.size}",
+                                        style: TextStyle(color: Colors.grey[700], fontSize: 11),
+                                      ),
+                                    ),
+                                  if (item.size.isNotEmpty && item.color.isNotEmpty)
+                                    const SizedBox(width: 8),
+                                  if (item.color.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        "Color: ${item.color}",
+                                        style: TextStyle(color: Colors.grey[700], fontSize: 11),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              if (item.color.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 2.0),
-                                  child: Text(
-                                    "Color: ${item.color}",
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Qty: ${item.quantity}",
                                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                                   ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Qty: ${item.quantity}",
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                  styledPrice(item.price, fontSize: 15),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              styledPrice(item.price, fontSize: 15),
                             ],
                           ),
                         ),
@@ -187,7 +247,7 @@ class OrderDetailsScreen extends StatelessWidget {
               content: Column(
                 children: [
                   _priceRow("Items Total:", order.totalAmount),
-                  _priceRow("Shipping:", 0.00),
+                  _priceRow("Shipping Fee:", 0.00),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Divider(),
@@ -196,10 +256,10 @@ class OrderDetailsScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "Order Total:",
+                        "Grand Total:",
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      styledPrice(order.totalAmount, fontSize: 18, color: Colors.black),
+                      styledPrice(order.totalAmount, fontSize: 18, color: Colors.black,),
                     ],
                   ),
                 ],
@@ -220,8 +280,9 @@ class OrderDetailsScreen extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text("Cancel Order"),
+                    child: const Text("Cancel Order", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -276,20 +337,26 @@ class OrderDetailsScreen extends StatelessWidget {
       case 'SHIPPED':
         color = Colors.blue;
         break;
-      default:
+      case 'CONFIRMED':
+        color = Colors.indigo;
+        break;
+      case 'PROCESSING':
         color = Colors.orange;
+        break;
+      default:
+        color = Colors.grey;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
         status,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );
   }

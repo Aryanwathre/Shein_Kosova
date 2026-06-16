@@ -12,10 +12,16 @@ class OrdersProvider with ChangeNotifier {
   List<OrderModel> _orders = [];
   Map<String, dynamic>? _orderStatus;
 
+  int _currentPage = 0;
+  bool _isLastPage = false;
+  bool _isLoadingMore = false;
+
   CheckoutState get state => _state;
   String? get errorMessage => _errorMessage;
   List<OrderModel> get orders => _orders;
   Map<String, dynamic>? get orderStatus => _orderStatus;
+  bool get isLastPage => _isLastPage;
+  bool get isLoadingMore => _isLoadingMore;
 
   void _setState(CheckoutState newState) {
     _state = newState;
@@ -57,16 +63,31 @@ class OrdersProvider with ChangeNotifier {
   }
 
   /// --------------------------------------------------
-  ///  GET ALL ORDERS
+  ///  GET ALL ORDERS (First Page)
   /// --------------------------------------------------
-  Future<void> getAllOrders() async {
+  Future<void> getAllOrders({bool refresh = false}) async {
+    if (refresh) {
+      _currentPage = 0;
+      _isLastPage = false;
+    }
+    
+    if (_state == CheckoutState.loading) return;
+    
     _setState(CheckoutState.loading);
 
     try {
-      final response = await _ordersApi.getOrders();
+      final response = await _ordersApi.getOrders(page: _currentPage);
 
       if (response.success && response.data != null) {
-        _orders = response.data!;  // 👈 Directly assign parsed List<OrderModel>
+        if (refresh) {
+          _orders = response.data!.orders;
+        } else {
+          // If not refresh, we probably want to replace for the "first" load
+          _orders = response.data!.orders;
+        }
+        
+        _isLastPage = response.data!.isLastPage;
+        _currentPage = response.data!.page;
 
         _clearError();
         _setState(CheckoutState.success);
@@ -75,6 +96,35 @@ class OrdersProvider with ChangeNotifier {
       }
     } catch (e) {
       _setError('Error fetching orders: $e');
+    }
+  }
+
+  /// --------------------------------------------------
+  ///  LOAD MORE ORDERS (Pagination)
+  /// --------------------------------------------------
+  Future<void> loadMoreOrders() async {
+    if (_isLoadingMore || _isLastPage) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _currentPage + 1;
+      final response = await _ordersApi.getOrders(page: nextPage);
+
+      if (response.success && response.data != null) {
+        _orders.addAll(response.data!.orders);
+        _isLastPage = response.data!.isLastPage;
+        _currentPage = response.data!.page;
+        _clearError();
+      } else {
+        debugPrint('Failed to load more orders: ${response.message}');
+      }
+    } catch (e) {
+      debugPrint('Error loading more orders: $e');
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
     }
   }
 
@@ -108,6 +158,9 @@ class OrdersProvider with ChangeNotifier {
     _orderStatus = null;
     _errorMessage = null;
     _state = CheckoutState.idle;
+    _currentPage = 0;
+    _isLastPage = false;
+    _isLoadingMore = false;
     notifyListeners();
   }
 }

@@ -141,6 +141,20 @@ class TokenManager {
   /// Initialize storage service (call once during app startup)
   static Future<void> initializeStorage() async {
     final initialized = await _storage.initialize();
+    
+    // Ensure clean state on first run after fresh install
+    // This helps if OS auto-restores data that we want cleared
+    if (initialized) {
+      const String firstRunKey = 'is_first_run_after_install';
+      final isFirstRun = await _storage.getString(firstRunKey) == null;
+      
+      if (isFirstRun) {
+        debugPrint('🧹 TokenManager: Fresh install detected. Clearing any lingering data...');
+        await _storage.clear();
+        await _storage.setString(firstRunKey, 'initialized');
+      }
+    }
+
     if (!initialized) {
       debugPrint('⚠️ TokenManager: Storage persistence unavailable, using in-memory fallback');
       if (kIsWeb) {
@@ -222,12 +236,6 @@ class TokenManager {
           }
           if (paymentConfig.containsKey('bankEnabled')) {
             await _storage.setBool(_bankEnabledKey, paymentConfig['bankEnabled'] == true);
-          }
-          if (paymentConfig.containsKey('cardEnabled')) {
-            await _storage.setBool(_cardEnabledKey, paymentConfig['cardEnabled'] == true);
-          }
-          if (paymentConfig.containsKey('upiEnabled')) {
-            await _storage.setBool(_upiEnabledKey, paymentConfig['upiEnabled'] == true);
           }
         }
       }
@@ -834,14 +842,15 @@ class OrdersApi extends BaseApi {
 
   }
 
-  Future<ApiResponse<List<OrderModel>>> getOrders() async {
+  Future<ApiResponse<PaginatedOrderResponse>> getOrders({int page = 0, int size = 10}) async {
     return makeRequest(
       requireAuth: true,
-      request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}orders'), headers: headers),
-      parser: (json) {
-        final List<dynamic> content = json["content"] ?? [];
-        return content.map((e) => OrderModel.fromJson(e)).toList();
+      request: (headers) {
+        final queryParams = {'page': page.toString(), 'size': size.toString()};
+        final uri = Uri.parse('${AppConstants.appApiLink}orders').replace(queryParameters: queryParams);
+        return client.get(uri, headers: headers);
       },
+      parser: (json) => PaginatedOrderResponse.fromJson(json),
     );
   }
 

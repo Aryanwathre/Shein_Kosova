@@ -30,7 +30,7 @@ class ConfigProvider extends ChangeNotifier {
   List<String> get enabledMethods {
     final List<String> methods = [];
     if (_codEnabled) methods.add("COD");
-    if (_cardEnabled) methods.add("CARD");
+    if (_bankEnabled) methods.add("CARD"); // Mapping bankEnabled -> Card Payment
     return methods;
   }
 
