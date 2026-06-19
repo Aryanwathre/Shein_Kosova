@@ -1,295 +1,314 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shein_kosova/services/api_service.dart';
 import 'dart:io' show Platform;
 
-class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
+// Combined Firebase Messaging and Local Notifications Services
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+class LocalNotificationsService {
+  // Private constructor for singleton pattern
+  LocalNotificationsService._internal();
 
-  // Callback for handling notification navigation
-  static void Function(String? path)? onNotificationTap;
+  // Singleton instance
+  static final LocalNotificationsService _instance = LocalNotificationsService._internal();
 
+  // Factory constructor to return singleton instance
+  factory LocalNotificationsService.instance() => _instance;
+
+  // Main plugin instance for handling notifications
+  late FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin;
+
+  // Android-specific initialization settings using app launcher icon
+  final _androidInitializationSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  // iOS-specific initialization settings with permission requests
+  final _iosInitializationSettings = const DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
+
+  // Android notification channel configuration
+  // Using 'high_importance_channel' as specified in AndroidManifest.xml
+  final _androidChannel = const AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    description: 'This channel is used for important notifications.',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+  );
+
+  // Flag to track initialization status
+  bool _isFlutterLocalNotificationInitialized = false;
+
+  // Counter for generating unique notification IDs
+  int _notificationIdCounter = 0;
+
+  /// Initializes the local notifications plugin for Android and iOS.
   Future<void> init() async {
-    // Ensure Firebase is initialized
-    if (Firebase.apps.isEmpty) {
-      debugPrint('Firebase not initialized. Skipping notification setup.');
+    // Check if already initialized to prevent redundant setup
+    if (_isFlutterLocalNotificationInitialized) {
       return;
     }
 
-    // Skip notification setup on web - web uses browser push notifications
-    if (kIsWeb) {
-      debugPrint('Running on web platform. Browser push notifications can be set up separately.');
-      return;
-    }
+    // Create plugin instance
+    _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-    // Request permissions (mobile only)
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+    // Combine platform-specific settings
+    final initializationSettings = InitializationSettings(
+      android: _androidInitializationSettings,
+      iOS: _iosInitializationSettings,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted notification permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      debugPrint('User granted provisional notification permission');
-    } else {
-      debugPrint('User denied notification permission');
-    }
-
-    // Initialize local notifications for Android/iOS
-    // Initialize local notifications
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-
-    await _localNotifications.initialize(
+    // Initialize plugin with settings and callback for notification taps
+    await _flutterLocalNotificationsPlugin.initialize(
+      settings:
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        _handleNotificationTap(response.payload);
+        // Handle notification tap in foreground
+        debugPrint('Foreground notification has been tapped: ${response.payload}');
+        NotificationService().handleNotificationTap(response.payload);
       },
-      onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
     );
 
-    // Create Android Notification Channel
-    if (Platform.isAndroid) {
-      const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'This channel is used for important notifications.',
-        importance: Importance.max,
-        playSound: true,
-        enableVibration: true,
-      );
+    // Create Android notification channel
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_androidChannel);
 
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-    }
-
-    // Request iOS notification permissions
-    if (Platform.isIOS) {
-      await _fcm.requestPermission(
-        alert: true,
-        announcement: true,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-    }
-
-    // Set up notification handlers BEFORE calling getInitialMessage
-    _setupNotificationHandlers();
-
-    // Handle notification when app is terminated (killed state)
-    // This must be called after setting up handlers
-    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
-    if (initialMessage != null) {
-      debugPrint('App opened from killed state with notification: ${initialMessage.messageId}');
-      _handleNotificationTap(initialMessage.data['path']);
-    }
-
-    // Listen for token refresh
-    _fcm.onTokenRefresh.listen((newToken) async {
-      debugPrint("FCM Token Refreshed: $newToken");
-      await _saveTokenToBackend(newToken);
-      await saveUserToFirestore(token: newToken);
-    });
-
-    // Get and save initial token
-    await refreshAndSaveToken();
+    // Mark initialization as complete
+    _isFlutterLocalNotificationInitialized = true;
   }
 
-  void _setupNotificationHandlers() {
-    // Skip handlers on web
-    if (kIsWeb) return;
+  /// Show a local notification with the given title, body, and payload.
+  Future<void> showNotification(
+    String? title,
+    String? body,
+    String? payload,
+  ) async {
+    // Android-specific notification details
+    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      _androidChannel.id,
+      _androidChannel.name,
+      channelDescription: _androidChannel.description,
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
 
-    // Handle background messages
+    // iOS-specific notification details
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    // Combine platform-specific details
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Display the notification
+    await _flutterLocalNotificationsPlugin.show(
+      id:
+      _notificationIdCounter++,
+      title:
+      title,
+      body:
+      body,
+      notificationDetails:
+      notificationDetails,
+      payload: payload,
+    );
+  }
+}
+
+class FirebaseMessagingService {
+  // Private constructor for singleton pattern
+  FirebaseMessagingService._internal();
+
+  // Singleton instance
+  static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
+
+  // Factory constructor to provide singleton instance
+  factory FirebaseMessagingService.instance() => _instance;
+
+  // Reference to local notifications service for displaying notifications
+  LocalNotificationsService? _localNotificationsService;
+
+  /// Initialize Firebase Messaging and sets up all message listeners
+  Future<void> init({required LocalNotificationsService localNotificationsService}) async {
+    // Skip setup on web as browser push notifications are different
+    if (kIsWeb) {
+      debugPrint('FCM skipping setup on web');
+      return;
+    }
+
+    // Init local notifications service
+    _localNotificationsService = localNotificationsService;
+
+    // Request user permission for notifications
+    await _requestPermission();
+
+    // Handle FCM token
+    await _handlePushNotificationsToken();
+
+    // Register handler for background messages (app terminated)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Handle foreground messages (app open)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Handling a foreground message: ${message.messageId}');
-      if (message.notification != null) {
-        _showLocalNotification(message);
-      }
-    });
+    // Listen for messages when the app is in foreground
+    FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
-    // Handle notification tap when app is in background but not terminated
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('App opened from background state with notification: ${message.messageId}');
-      _handleNotificationTap(message.data['path']);
-    });
-  }
+    // Listen for notification taps when the app is in background but not terminated
+    FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
 
-  Future<void> refreshAndSaveToken() async {
-    try {
-      String? token = await getToken();
-      if (token != null) {
-        debugPrint("Initial FCM Token: $token");
-        await _saveTokenToBackend(token);
-        await saveUserToFirestore(token: token);
-      }
-    } catch (e) {
-      debugPrint("Error in refreshAndSaveToken: $e");
+    // Check for initial message that opened the app from terminated state
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      _onMessageOpenedApp(initialMessage);
     }
   }
 
+  /// Retrieves and manages the FCM token for push notifications
+  Future<void> _handlePushNotificationsToken() async {
+    // Get the FCM token for the device
+    final token = await getToken();
+    debugPrint('Push notifications token: $token');
+
+    // Listen for token refresh events
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+      debugPrint('FCM token refreshed: $fcmToken');
+      _saveTokenToBackend(fcmToken);
+    }).onError((error) {
+      // Handle errors during token refresh
+      debugPrint('Error refreshing FCM token: $error');
+    });
+  }
+
+  /// Gets the current FCM token, handling APNS for iOS
   Future<String?> getToken() async {
     try {
       if (!kIsWeb && Platform.isIOS) {
-        String? apnsToken = await _fcm.getAPNSToken();
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        print('apnsToken loli');
+        print(apnsToken);
         if (apnsToken == null) {
           // Wait for APNS token if not immediately available
           await Future.delayed(const Duration(seconds: 2));
-          apnsToken = await _fcm.getAPNSToken();
-          debugPrint("APNS Token: $apnsToken");
-        }
-        if (apnsToken == null) {
-          debugPrint("Warning: APNS token is null on iOS");
-          return null;
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+
+          debugPrint("APNS token retrieved after delay: $apnsToken");
         }
       }
-      String? token = await _fcm.getToken();
-      debugPrint("FCM Token: $token");
-      return token;
+      return await FirebaseMessaging.instance.getToken();
     } catch (e) {
       debugPrint("Error getting FCM token: $e");
       return null;
     }
   }
 
-  Future<void> saveUserToFirestore({
-    required String token,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    try {
-      final userData = await ApiServiceManager().getCurrentUser();
-      String? userId;
+  /// Requests notification permission from the user
+  Future<void> _requestPermission() async {
+    // Request permission for alerts, badges, and sounds
+    final result = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
 
-      if (userData != null && userData['id'] != null) {
-        userId = userData['id'].toString();
-      } else if (additionalData != null && additionalData['id'] != null) {
-        userId = additionalData['id'].toString();
-      }
+    // Log the user's permission decision
+    debugPrint('User granted permission: ${result.authorizationStatus}');
+  }
 
-      if (userId != null) {
-        final dataToSave = {
-          'fcmToken': token,
-          'lastUpdated': FieldValue.serverTimestamp(),
-          'platform': kIsWeb ? 'Web' : (Platform.isIOS ? 'iOS' : 'Android'),
-          if (additionalData != null) ...additionalData,
-        };
-
-        await _firestore.collection('users').doc(userId).set(
-              dataToSave,
-              SetOptions(merge: true),
-            );
-        debugPrint("User data and FCM Token saved to Firestore for user: $userId");
-      }
-    } catch (e) {
-      debugPrint("Error saving user data to Firestore: $e");
+  /// Handles messages received while the app is in the foreground
+  void _onForegroundMessage(RemoteMessage message) {
+    debugPrint('Foreground message received: ${message.data}');
+    final notificationData = message.notification;
+    if (notificationData != null) {
+      // Display a local notification using the service
+      _localNotificationsService?.showNotification(
+          notificationData.title, 
+          notificationData.body, 
+          message.data['path'] ?? message.data.toString()
+      );
     }
   }
 
-  Future<void> _showLocalNotification(RemoteMessage message) async {
-    if (kIsWeb) return;
-    try {
-      const AndroidNotificationDetails androidPlatformChannelSpecifics =
-          AndroidNotificationDetails(
-        'high_importance_channel',
-        'High Importance Notifications',
-        channelDescription: 'This channel is used for important notifications.',
-        importance: Importance.max,
-        priority: Priority.high,
-        playSound: true,
-        enableVibration: true,
-      );
-
-      const DarwinNotificationDetails iosNotificationDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      );
-
-      const NotificationDetails platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iosNotificationDetails,
-      );
-
-      await _localNotifications.show(
-        message.hashCode,
-        message.notification?.title,
-        message.notification?.body,
-        platformChannelSpecifics,
-        payload: message.data['path'] ?? '',
-      );
-    } catch (e) {
-      debugPrint("Error showing local notification: $e");
-    }
+  /// Handles notification taps when app is opened from the background or terminated state
+  void _onMessageOpenedApp(RemoteMessage message) {
+    debugPrint('Notification caused the app to open: ${message.data}');
+    NotificationService().handleNotificationTap(message.data['path']);
   }
 
-  void _handleNotificationTap(String? path) {
-    if (path != null && path.isNotEmpty) {
-      debugPrint("Notification tapped, navigating to: $path");
-      // Call the registered callback if available
-      if (onNotificationTap != null) {
-        onNotificationTap!(path);
-      }
-    }
-  }
-
-  // Callback for background notification responses
-  @pragma('vm:entry-point')
-  static Future<void> _onDidReceiveBackgroundNotificationResponse(
-    NotificationResponse notificationResponse,
-  ) async {
-    debugPrint('Background notification response: payload=${notificationResponse.payload}');
-    if (onNotificationTap != null) {
-      onNotificationTap!(notificationResponse.payload);
-    }
-  }
-
+  /// Sends the FCM token to the backend if the user is logged in
   Future<void> _saveTokenToBackend(String token) async {
-    bool loggedIn = await ApiServiceManager().isUserLoggedIn();
-    if (loggedIn) {
-      debugPrint("Saving FCM token to backend: $token");
-      // TODO: Implement actual backend call if required
+    try {
+      bool loggedIn = await ApiServiceManager().isUserLoggedIn();
+      if (loggedIn) {
+        debugPrint("Saving FCM token to backend: $token");
+        // TODO: If your API supports updating FCM token, call it here
+      }
+    } catch (e) {
+      debugPrint("Error saving token to backend: $e");
     }
   }
 }
 
+/// Background message handler (must be top-level function or static)
+/// Handles messages when the app is fully terminated
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint("Handling a background message: ${message.messageId}");
+  debugPrint('Background message received: ${message.data}');
+}
 
-  // Handle data-only messages in background
-  if (message.data.isNotEmpty) {
-    debugPrint('Message data: ${message.data}');
+/// Compatibility wrapper for existing code using NotificationService
+class NotificationService {
+  // Private constructor for singleton pattern
+  NotificationService._internal();
+
+  // Singleton instance
+  static final NotificationService _instance = NotificationService._internal();
+
+  // Factory constructor to provide singleton instance
+  factory NotificationService() => _instance;
+
+  final _firebaseService = FirebaseMessagingService.instance();
+  final _localService = LocalNotificationsService.instance();
+
+  // Callback for handling notification navigation
+  static void Function(String? path)? onNotificationTap;
+
+  /// Initialize all notification services
+  Future<void> init() async {
+    if (kIsWeb) return;
+    
+    await _localService.init();
+    await _firebaseService.init(localNotificationsService: _localService);
   }
 
-  if (message.notification != null) {
-    debugPrint('Message notification: title=${message.notification?.title}, body=${message.notification?.body}');
+  /// Retrieves the current FCM token
+  Future<String?> getToken() => _firebaseService.getToken();
+
+  /// Refreshes and saves the token to the backend if possible
+  Future<void> refreshAndSaveToken() async {
+    final token = await getToken();
+    if (token != null) {
+      await _firebaseService._saveTokenToBackend(token);
+    }
+  }
+
+  /// Handles notification taps by triggering the registered callback
+  void handleNotificationTap(String? path) {
+    if (path != null && path.isNotEmpty) {
+      debugPrint("Notification tapped, navigating to: $path");
+      if (onNotificationTap != null) {
+        onNotificationTap!(path);
+      }
+    }
   }
 }

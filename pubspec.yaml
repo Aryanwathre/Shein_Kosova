@@ -18,36 +18,35 @@ dependencies:
   go_router: ^17.0.1
   carousel_slider: ^5.1.1
   flutter_svg: ^2.2.3
-  google_fonts: ^6.3.1
+  google_fonts: ^8.1.0
   shared_preferences: ^2.5.3
-  dropdown_button2: ^2.3.9
+  dropdown_button2: ^3.1.0
   confetti: ^0.8.0
   country_code_picker: ^3.4.1
   csc_picker_plus: ^0.0.3
   input_quantity: ^2.5.1
-  easy_stepper: ^0.9.1
+  easy_stepper: ^1.1.0
   cached_network_image: ^3.4.1
   intl: ^0.20.2
   shimmer: ^3.0.0
-  share_plus: ^10.1.4
+  share_plus: ^13.1.0
   flutter_html: ^3.0.0
   webview_flutter: ^4.13.1
   
   # Push Notifications & Firebase
-  firebase_core: ^3.10.1
-  firebase_messaging: ^15.2.2
-  cloud_firestore: ^5.6.1
-  flutter_local_notifications: ^18.0.1
+  firebase_core: ^4.11.0
+  firebase_messaging: ^16.4.0
+  flutter_local_notifications: ^22.0.1
 
   # Web-specific dependencies for cross-platform support
   universal_io: ^2.2.2
-  connectivity_plus: ^6.0.3
+  connectivity_plus: ^7.1.1
   url_launcher: ^6.2.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

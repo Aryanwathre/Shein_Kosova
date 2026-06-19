@@ -31,10 +31,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _quantity = 1;
   late ProductProvider _productProvider;
   final TextEditingController _colorController = TextEditingController();
+  final ScrollController _mainScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+
+    _mainScrollController.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
@@ -54,9 +57,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             _colorController.text = productProvider.product!.colors!;
           }
 
+          // Fetch wishlist and release the main UI loader
           await wishlistProvider.loadWishlist();
+          if (mounted) productProvider.isLoading = false;
 
-          await productProvider.getProductByCode(
+          // Start fetching related products in background (non-blocking)
+          productProvider.getProductByCode(
             int.parse(widget.product!.category.id),
             widget.product!.id,
           );
@@ -66,19 +72,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
              if (productProvider.product?.colors != null) {
                _colorController.text = productProvider.product!.colors!;
              }
-             await productProvider.getProductByCode(
+             
+             // Release UI loader as soon as main product is available
+             if (mounted) productProvider.isLoading = false;
+
+             // Background fetch for category products
+             productProvider.getProductByCode(
                int.parse(productProvider.product!.category.id),
                productProvider.product!.id,
              );
           }
           await wishlistProvider.loadWishlist();
         }
-      } finally {
-        if (mounted) {
-          productProvider.isLoading = false;
-        }
+      } catch (e) {
+        debugPrint('Error in initState: $e');
+        if (mounted) productProvider.isLoading = false;
       }
     });
+  }
+
+  void _onScroll() {
+    if (_mainScrollController.position.pixels >= _mainScrollController.position.maxScrollExtent - 400) {
+      _productProvider.loadMoreCategoryProducts();
+    }
   }
 
   @override
@@ -89,6 +105,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   void dispose() {
+    _mainScrollController.removeListener(_onScroll);
+    _mainScrollController.dispose();
     _productProvider.resetDetails();
     _colorController.dispose();
     super.dispose();
@@ -121,6 +139,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         return Scaffold(
           appBar: _buildAppBar(context, product),
           body: SingleChildScrollView(
+            controller: _mainScrollController,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -862,17 +881,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       builder: (context, productProvider, _) {
         final productList = productProvider.categoryProducts;
 
-        if (productProvider.listState == ProductListState.loading) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (productList.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
+        // Keep the header visible even while loading to avoid layout shifts
         return Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
@@ -883,27 +892,48 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.5,
+
+              // Only this part shows the loader or the grid
+              if (productProvider.listState == ProductListState.loading && productList.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (productList.isEmpty)
+                const SizedBox.shrink()
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.5,
+                  ),
+                  itemCount: productList.length,
+                  itemBuilder: (context, index) {
+                    final product = productList[index];
+                    return ProductCard(
+                      onTap: () {
+                        context.push('/products/${product.id}', extra: product);
+                      },
+                      context: context,
+                      product: product,
+                    );
+                  },
                 ),
-                itemCount: productList.length,
-                itemBuilder: (context, index) {
-                  final product = productList[index];
-                  return ProductCard(
-                    onTap: () {
-                      context.push('/products/${product.id}', extra: product);
-                    },
-                    context: context,
-                    product: product,
-                  );
-                },
-              ),
+
+              // Pagination loader at the very bottom
+              if (productProvider.hasMoreCategoryProducts)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: Center(
+                    child: productProvider.isLoadingMoreCategory
+                        ? const CircularProgressIndicator()
+                        : const SizedBox.shrink(),
+                  ),
+                ),
             ],
           ),
         );

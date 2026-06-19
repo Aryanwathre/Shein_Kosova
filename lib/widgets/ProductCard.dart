@@ -56,9 +56,12 @@ class ProductCard extends StatelessWidget {
                           )
                         : CachedNetworkImage(
                             imageUrl: product.mainImageUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
+                            imageBuilder: (context, imageProvider) => Image(
+                              image: ResizeImage(imageProvider, width: 600),
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
                             placeholder: (context, url) => const ShimmerWidget.rectangular(height: double.infinity),
                             errorWidget: (context, url, error) => Container(
                               color: Colors.grey[200],
@@ -214,7 +217,10 @@ class ProductListCard extends StatelessWidget {
                         )
                       : CachedNetworkImage(
                           imageUrl: product.mainImageUrl,
-                          fit: BoxFit.cover,
+                          imageBuilder: (context, imageProvider) => Image(
+                            image: ResizeImage(imageProvider, width: 300),
+                            fit: BoxFit.cover,
+                          ),
                           placeholder: (context, url) => const ShimmerWidget.rectangular(height: 120, width: 100),
                           errorWidget: (context, url, error) => Container(
                             color: Colors.grey[200],
