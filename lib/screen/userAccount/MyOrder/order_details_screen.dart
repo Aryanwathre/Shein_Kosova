@@ -2,21 +2,82 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/constants/routes.dart';
 import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/provider/orders_provider.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
-  final OrderModel order;
+class OrderDetailsScreen extends StatefulWidget {
+  final OrderModel? order;
+  final String? orderId;
 
-  const OrderDetailsScreen({super.key, required this.order});
+  const OrderDetailsScreen({super.key, this.order, this.orderId});
+
+  @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  OrderModel? _order;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.order != null) {
+      _order = widget.order;
+    } else if (widget.orderId != null) {
+      _fetchOrder();
+    }
+  }
+
+  Future<void> _fetchOrder() async {
+    setState(() => _isLoading = true);
+    final order = await Provider.of<OrdersProvider>(context, listen: false)
+        .fetchOrderById(widget.orderId!);
+    if (mounted) {
+      setState(() {
+        _order = order;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Order Details")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_order == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Order Details")),
+        body: const Center(child: Text("Order not found")),
+      );
+    }
+
+    final order = _order!;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Order Details"),
         centerTitle: true,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if(context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.landing);
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(

@@ -1,8 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shein_kosova/services/api_service.dart';
-import 'dart:io' show Platform;
 
 // Combined Firebase Messaging and Local Notifications Services
 
@@ -193,20 +194,28 @@ class FirebaseMessagingService {
   Future<String?> getToken() async {
     try {
       if (!kIsWeb && Platform.isIOS) {
+        // iOS requires APNS token to be set up first
         String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        print('apnsToken loli');
-        print(apnsToken);
-        if (apnsToken == null) {
-          // Wait for APNS token if not immediately available
-          await Future.delayed(const Duration(seconds: 2));
-          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
 
-          debugPrint("APNS token retrieved after delay: $apnsToken");
+        if (apnsToken == null) {
+          debugPrint('APNS token not immediately available, waiting...');
+          // Wait longer for APNS token if not available
+          await Future.delayed(const Duration(seconds: 3));
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        }
+
+        debugPrint('APNS token: ${apnsToken ?? "STILL NOT AVAILABLE"}');
+
+        if (apnsToken == null) {
+          debugPrint('WARNING: APNS token is null - check APNs certificate in Firebase Console');
         }
       }
-      return await FirebaseMessaging.instance.getToken();
+
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      debugPrint('FCM token retrieved: $fcmToken');
+      return fcmToken;
     } catch (e) {
-      debugPrint("Error getting FCM token: $e");
+      debugPrint('ERROR getting FCM token: $e');
       return null;
     }
   }
@@ -221,8 +230,19 @@ class FirebaseMessagingService {
       provisional: false,
     );
 
-    // Log the user's permission decision
-    debugPrint('User granted permission: ${result.authorizationStatus}');
+    // Detailed logging of permission status
+    final status = result.authorizationStatus;
+    debugPrint('iOS Notification Permission Status: $status');
+
+    if (status == AuthorizationStatus.authorized) {
+      debugPrint('✓ User granted full notification permissions');
+    } else if (status == AuthorizationStatus.provisional) {
+      debugPrint('⚠ User granted provisional notification permissions (quiet notifications only)');
+    } else if (status == AuthorizationStatus.denied) {
+      debugPrint('✗ User denied notification permissions');
+    } else {
+      debugPrint('? Unknown permission status: $status');
+    }
   }
 
   /// Handles messages received while the app is in the foreground
@@ -230,12 +250,15 @@ class FirebaseMessagingService {
     debugPrint('Foreground message received: ${message.data}');
     final notificationData = message.notification;
     if (notificationData != null) {
+      debugPrint('Displaying notification - Title: ${notificationData.title}, Body: ${notificationData.body}');
       // Display a local notification using the service
       _localNotificationsService?.showNotification(
-          notificationData.title, 
-          notificationData.body, 
-          message.data['path'] ?? message.data.toString()
+        notificationData.title,
+        notificationData.body,
+        message.data['path'] ?? message.data.toString(),
       );
+    } else {
+      debugPrint('WARNING: Received message with no notification data');
     }
   }
 
@@ -264,6 +287,23 @@ class FirebaseMessagingService {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Background message received: ${message.data}');
+
+  // For iOS: Background messages don't auto-display like Android
+  // We need to show them as local notifications
+  if (!kIsWeb && Platform.isIOS) {
+    final notificationData = message.notification;
+    if (notificationData != null) {
+      // Initialize and show local notification in background
+      final localService = LocalNotificationsService.instance();
+      await localService.init();
+      await localService.showNotification(
+        notificationData.title,
+        notificationData.body,
+        message.data['path'] ?? message.data.toString(),
+      );
+      debugPrint('iOS background notification displayed');
+    }
+  }
 }
 
 /// Compatibility wrapper for existing code using NotificationService

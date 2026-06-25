@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/constants/routes.dart';
 import 'package:shein_kosova/constants/payment_error_codes.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -81,16 +84,30 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage> {
             debugPrint('🔗 Navigation requested: ${request.url}');
             final uri = Uri.parse(request.url);
 
+            // Check for complete-order redirect
+            if (request.url.contains('/complete-order/')) {
+              final segments = uri.pathSegments;
+              final orderId = segments.last;
+              debugPrint('✅ Payment complete via complete-order: $orderId');
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted) {
+                  context.goNamed('order-details', queryParameters: {'orderId': orderId});
+                }
+              });
+              return NavigationDecision.prevent;
+            }
+
             // Check for success redirect URLs
             if (request.url.contains('success') ||
                 request.url.contains('order-success') ||
                 request.url.contains('paymentSuccess')) {
               debugPrint(
-                '✅ Payment successful! Redirecting to order success page...',
+                '✅ Payment successful! Redirecting to order details...',
               );
               Future.delayed(const Duration(milliseconds: 500), () {
                 if (mounted) {
-                  context.pushReplacement('/order-success');
+                  context.read<CartProvider>().clearCart();
+                  context.goNamed('order-details', queryParameters: {'orderId': widget.orderId});
                 }
               });
               return NavigationDecision.prevent;

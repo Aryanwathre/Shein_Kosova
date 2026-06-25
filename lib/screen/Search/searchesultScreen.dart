@@ -29,35 +29,43 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   bool _viewAsGrid = true;
-  late SearchProvider searchProvider = Provider.of<SearchProvider>(context, listen: false);
+  SearchProvider? _searchProvider;
 
   @override
   void initState() {
     super.initState();
+    // Safely get provider reference once
+    _searchProvider = Provider.of<SearchProvider>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _initializeSearchResult();
 
       if (_scrollController.hasClients) {
-        _scrollController.addListener(() {
-          if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 200) {
-            searchProvider.search(page: (searchProvider.currentPage ?? 0) + 1);
-          }
-        });
+        _scrollController.addListener(_scrollListener);
       }
     });
   }
 
+  void _scrollListener() {
+    final provider = _searchProvider;
+    if (provider != null && _scrollController.hasClients) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        provider.search(page: (provider.currentPage ?? 0) + 1);
+      }
+    }
+  }
+
   void _initializeSearchResult() {
-    final provider = Provider.of<SearchProvider>(context, listen: false);
-    provider.search(query: widget.searchQuery, categoryId: widget.categoryId);
+    _searchProvider?.search(query: widget.searchQuery, categoryId: widget.categoryId);
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
-    searchProvider.clearSearch();
+    _searchProvider?.clearSearch();
     super.dispose();
   }
 
@@ -156,7 +164,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _topSortBar(),
-          // _filterChipsBar(), // Removed for now, keeping for future use
+          // filterChipsBar(), // Removed for now, keeping for future use
         ],
       ),
     );
@@ -324,7 +332,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => searchProvider.clearFilters(
+                  onPressed: () => _searchProvider?.clearFilters(
                     keepCategoryId: widget.categoryId != null,
                     keepQuery: widget.searchQuery != null && widget.searchQuery!.isNotEmpty,
                   ),
@@ -340,8 +348,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    searchProvider.search();
-                    context.pop();
+                    _searchProvider?.search();
+                    if (mounted) context.pop();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
@@ -593,8 +601,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   }
 
   Future _showQuickAdd(BuildContext context, ProductModel product) {
-    final provider = Provider.of<SearchProvider>(context, listen: false);
-    provider.fetchProductDetails(product.id.toString());
+    _searchProvider?.fetchProductDetails(product.id.toString());
 
     return showModalBottomSheet(
       context: context,
@@ -605,7 +612,9 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         return _QuickAddSheet(product: product);
       },
     ).then((_) {
-      provider.resetQuantity();
+      if (mounted) {
+        _searchProvider?.resetQuantity();
+      }
     });
   }
 }
@@ -638,11 +647,11 @@ class _QuickAddSheetState extends State<_QuickAddSheet> {
     return Consumer<SearchProvider>(
       builder: (context, provider, _) {
         if (provider.isLoadingProductDetails || provider.selectedProductDetails == null) {
-          return Padding(
-            padding: const EdgeInsets.all(25),
+          return const Padding(
+            padding: EdgeInsets.all(25),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 ShimmerWidget.rectangular(height: 150),
                 SizedBox(height: 15),
                 ShimmerWidget.rectangular(height: 20, width: 200),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shein_kosova/constants/routes.dart';
 import 'package:shein_kosova/provider/CheckoutProvider.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
 import 'package:shein_kosova/provider/cart_provider.dart';
@@ -166,18 +167,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             context.pushNamed(
                               'payment',
                               queryParameters: {
-                                'redirectUrl': checkout.redirectUrl!,
+                                'redirectUrl': checkout.redirectUrl,
                                 'orderId': checkout.orderId ?? '',
                               },
                             );
                           } else {
                             // If redirectUrl is null but success is true, it means the order is placed (e.g. COD)
                             debugPrint('✅ Order placed successfully. Navigating to success page...');
-                            
-                            // Clear the cart since the order is successfully placed
-                            context.read<CartProvider>().clearCart();
 
-                            context.go('/order-success');
+                            context.goNamed(
+                              'complete-order',
+                              pathParameters: {'orderId': checkout.orderId ?? ''},
+                            );
                           }
                         }
                       } else {

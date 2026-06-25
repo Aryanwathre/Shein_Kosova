@@ -1,11 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/models/ProductModel.dart';
 import 'package:shein_kosova/models/UserProfile.dart';
 import 'package:shein_kosova/models/order_model.dart';
+import 'package:shein_kosova/provider/cart_provider.dart';
 import 'package:shein_kosova/screen/Auth/login_screen.dart';
 import 'package:shein_kosova/screen/Auth/register_screen.dart';
-import 'package:shein_kosova/screen/OrderConfirmation/OrderPlacedSuccess.dart';
+
 import 'package:shein_kosova/screen/OrderConfirmation/checkout_page.dart';
 import 'package:shein_kosova/screen/Payment/paymentProcessing.dart';
 import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
@@ -40,6 +43,7 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String myOrders = '/my-orders';
   static const String orderDetails = '/order-details';
+  static const String completeOrder = '/complete-order/:orderId';
   static const String addresses = '/addresses';
   static const String addAddress = '/add-address';
   static const String editAddress = '/edit-address';
@@ -47,7 +51,6 @@ class AppRoutes {
   static const String changePassword = '/change-password';
   static const String checkout = '/checkout';
   static const String payment = '/payment';
-  static const String orderPlacedSuccess = '/order-success';
   static const String search = '/search';
   static String termsAndConditions = '/terms-and-conditions';
   static String privacyPolicy = '/privacy-policy';
@@ -64,6 +67,7 @@ class AppRoutes {
       ),
       GoRoute(
         path: landing,
+        name: 'shop',
         builder: (context, state) {
           final index = int.tryParse(state.uri.queryParameters['index'] ?? '0') ?? 0;
           return LandingPage(selectedIndex: index);
@@ -139,9 +143,23 @@ class AppRoutes {
       ),
       GoRoute(
         path: orderDetails,
+        name: 'order-details',
         builder: (context, state) {
-          final order = state.extra as OrderModel;
-          return OrderDetailsScreen(order: order);
+          final order = state.extra as OrderModel?;
+          final orderId = state.uri.queryParameters['orderId'];
+          return OrderDetailsScreen(order: order, orderId: orderId);
+        },
+      ),
+      GoRoute(
+        path: completeOrder,
+        name: 'complete-order',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'];
+          // Clear cart on success redirect
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<CartProvider>().clearCart();
+          });
+          return OrderDetailsScreen(orderId: orderId);
         },
       ),
       GoRoute(
@@ -185,10 +203,6 @@ class AppRoutes {
              orderId: orderId,
            );
          },
-       ),
-       GoRoute(
-         path: orderPlacedSuccess,
-         builder: (context, state) => const OrderSuccessPage(),
        ),
       GoRoute(
         path: search,

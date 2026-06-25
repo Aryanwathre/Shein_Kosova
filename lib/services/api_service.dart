@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -133,9 +134,12 @@ class TokenManager {
   static const String _bankEnabledKey = 'bank_enabled';
   static const String _cardEnabledKey = 'card_enabled';
   static const String _upiEnabledKey = 'upi_enabled';
+  static const String _fcmTokenKey = 'fcm_token';
 
-  static bool _isRefreshing = false;
-  static final List<Function> _refreshCallbacks = [];
+  static Completer<bool>? _refreshCompleter;
+  static final StreamController<bool> _authEventController = StreamController<bool>.broadcast();
+  static Stream<bool> get authEventStream => _authEventController.stream;
+
   static final StorageService _storage = StorageService();
 
   /// Initialize storage service (call once during app startup)
@@ -291,6 +295,11 @@ class TokenManager {
     }
   }
 
+  static Future<void> logout() async {
+    await clearAllData();
+    _authEventController.add(false); // Signal unauthenticated
+  }
+
   static Future<bool> isTokenValid() async {
     final tokenData = await getTokenData();
     return tokenData != null && !tokenData.isExpired;
@@ -324,17 +333,19 @@ class TokenManager {
   }
 
   static Future<bool> _refreshAccessToken() async {
-    if (_isRefreshing) {
-      await Future.delayed(const Duration(milliseconds: 100));
-      while (_isRefreshing) {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
-      return await isTokenValid();
+    if (_refreshCompleter != null) {
+      return _refreshCompleter!.future;
     }
-    _isRefreshing = true;
+
+    _refreshCompleter = Completer<bool>();
+    
     try {
       final tokenData = await getTokenData();
-      if (tokenData == null || tokenData.refreshToken.isEmpty) return false;
+      if (tokenData == null || tokenData.refreshToken.isEmpty) {
+        _refreshCompleter!.complete(false);
+        return false;
+      }
+
       final response = await ApiClient().client.post(
         Uri.parse('${AppConstants.appApiLink}auth/refresh'),
         headers: {"Content-Type": "application/json"},
@@ -344,22 +355,25 @@ class TokenManager {
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final responseData = await compute(jsonDecode, response.body);
         await saveTokensFromResponse(responseData['data'] ?? responseData);
-        for (final callback in _refreshCallbacks) { callback(); }
-        _refreshCallbacks.clear();
+        _refreshCompleter!.complete(true);
         return true;
       } else {
-        await clearAllData();
+        await logout();
+        _refreshCompleter!.complete(false);
         return false;
       }
     } catch (e) {
+      if (!_refreshCompleter!.isCompleted) {
+        _refreshCompleter!.complete(false);
+      }
       return false;
     } finally {
-      _isRefreshing = false;
+      _refreshCompleter = null;
     }
   }
 
   static Future<bool> forceRefreshToken() async {
-    _isRefreshing = false;
+    _refreshCompleter = null;
     return await _refreshAccessToken();
   }
 }
@@ -397,7 +411,7 @@ abstract class BaseApi {
             retryCount++;
             continue;
           }
-          await TokenManager.clearAllData();
+          await TokenManager.logout();
           return ApiResponse.error("Session expired. Please login again.", statusCode: 401);
         }
         return await _handleResponse(response, parser);
@@ -854,11 +868,11 @@ class OrdersApi extends BaseApi {
     );
   }
 
-  Future<ApiResponse<Map<String, dynamic>>> getOrderById({required String orderId}) async {
+  Future<ApiResponse<OrderModel>> getOrderById({required String orderId}) async {
     return makeRequest(
       requireAuth: true,
       request: (headers) => client.get(Uri.parse('${AppConstants.appApiLink}orders/$orderId/status'), headers: headers),
-      parser: (json) => json is Map<String, dynamic> ? json : {'data': json},
+      parser: (json) => OrderModel.fromJson(json['data'] ?? json),
     );
   }
 }
@@ -1030,6 +1044,6 @@ class ApiServiceManager {
 
   Future<bool> isUserLoggedIn() async { return await TokenManager.isTokenValid(); }
   Future<Map<String, dynamic>?> getCurrentUser() async { return await TokenManager.getUserData(); }
-  Future<void> logout() async { await TokenManager.clearAllData(); }
+  Future<void> logout() async { await TokenManager.logout(); }
   void dispose() { ApiClient().dispose(); }
 }

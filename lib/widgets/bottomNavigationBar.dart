@@ -124,7 +124,7 @@ class _LandingPageState extends State<LandingPage> {
     super.initState();
     _pages = [
       const Homescreen(),
-      const CargorySearchScreen(),
+      const CategorySearchScreen(),
       const CartScreen(),
       const ProfileScreen(),
     ];

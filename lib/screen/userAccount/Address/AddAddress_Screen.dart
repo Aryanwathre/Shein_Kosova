@@ -1,4 +1,3 @@
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +25,20 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final _receiverLastNameController = TextEditingController();
   final _contactCodeController = TextEditingController();
   final _contactNumberController = TextEditingController();
+
+  final List<Map<String, String>> _countryCodes = [
+    {'name': 'Kosovo', 'code': '+383'},
+    {'name': 'Albania', 'code': '+355'},
+    {'name': 'North Macedonia', 'code': '+389'},
+  ];
+  late String _selectedCountryCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCountryCode = _countryCodes[0]['code']!;
+    _contactCodeController.text = _selectedCountryCode;
+  }
 
   bool _isDefault = false;
 
@@ -158,31 +171,33 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 children: [
                   Container(
                     height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color:   AppColors.border),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: Localizations.override(
-                      context: context,
-                      locale: const Locale('en'),
-                      child: CountryCodePicker(
-                        padding: const EdgeInsets.all(0),
-                        onChanged: (country) {
-                          _contactCodeController.text = country.dialCode ?? "";
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCountryCode,
+                        items: _countryCodes.map((Map<String, String> country) {
+                          return DropdownMenuItem<String>(
+                            value: country['code'],
+                            child: Text(
+                              "${country['name']} (${country['code']})",
+                              style: const TextStyle(
+                                color: AppColors.textNormal,
+                                fontSize: 12,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedCountryCode = newValue;
+                              _contactCodeController.text = newValue;
+                            });
+                          }
                         },
-                        showCountryOnly: false,
-                        showOnlyCountryWhenClosed: false,
-                        alignLeft: false,
-                        showFlag: false,
-                        textStyle: TextStyle(
-                          color: AppColors.textNormal,
-                          fontSize: 12,
-                        ),
-                        flagWidth: 20,
-                      
-                        boxDecoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
                       ),
                     ),
                   ),
@@ -192,7 +207,6 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                       label: "",
                       keyboardType: TextInputType.phone,
                       validator: _requiredValidator,
-
                     ),
                   ),
                 ],

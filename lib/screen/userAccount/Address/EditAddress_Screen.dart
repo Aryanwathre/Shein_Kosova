@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
+import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/widgets/custom_text_fields.dart';
 
 class EditAddressScreen extends StatefulWidget {
@@ -28,13 +29,34 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
 
   bool _isDefault = false;
 
+  final List<Map<String, String>> _countryCodes = [
+    {'name': 'Kosovo', 'code': '+383'},
+    {'name': 'Albania', 'code': '+355'},
+    {'name': 'North Macedonia', 'code': '+389'},
+  ];
+  late String _selectedCountryCode;
+
   @override
   void initState() {
     super.initState();
     final a = widget.address;
 
     _receiverNameController = TextEditingController(text: a.receiverName);
-    _contactNumberController = TextEditingController(text: a.contactNumber);
+    
+    // Parse contact number to split code and number
+    String contact = a.contactNumber;
+    _selectedCountryCode = _countryCodes[0]['code']!; // Default
+    String phoneOnly = contact;
+
+    for (var country in _countryCodes) {
+      if (contact.startsWith(country['code']!)) {
+        _selectedCountryCode = country['code']!;
+        phoneOnly = contact.substring(country['code']!.length);
+        break;
+      }
+    }
+
+    _contactNumberController = TextEditingController(text: phoneOnly);
     _addressLine1Controller = TextEditingController(text: a.addressLine1);
     _addressLine2Controller = TextEditingController(text: a.addressLine2);
     _cityController = TextEditingController(text: a.city);
@@ -60,9 +82,10 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
   /// 🔍 Detect changes for enabling/disabling button
   bool _hasChanges() {
     final a = widget.address;
+    String fullContact = _selectedCountryCode + _contactNumberController.text.trim();
     return
       _receiverNameController.text.trim() != a.receiverName ||
-          _contactNumberController.text.trim() != a.contactNumber ||
+          fullContact != a.contactNumber ||
           _isDefault != (a.isDefault) ||
           _addressLine1Controller.text.trim() != a.addressLine1 ||
           _addressLine2Controller.text.trim() != a.addressLine2 ||
@@ -81,7 +104,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     AddressModel(
       id: widget.address.id,
       receiverName: _receiverNameController.text.trim(),
-      contactNumber: _contactNumberController.text.trim(),
+      contactNumber: _selectedCountryCode + _contactNumberController.text.trim(),
       isDefault: _isDefault,
       addressLine1: _addressLine1Controller.text.trim(),
       addressLine2: _addressLine2Controller.text.trim(),
@@ -126,12 +149,50 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
               const SizedBox(height: 12),
 
               /// Contact Number
-              inputField(
-                label: "Contact Number",
-                controller: _contactNumberController,
-                keyboardType: TextInputType.phone,
-                validator: (v) => v!.isEmpty ? "Required" : null,
-                textInputAction: TextInputAction.next,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      border: Border.all(color: AppColors.borderDark),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedCountryCode,
+                        items: _countryCodes.map((Map<String, String> country) {
+                          return DropdownMenuItem<String>(
+                            value: country['code'],
+                            child: Text(
+                              "${country['name']} (${country['code']})",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedCountryCode = newValue;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: inputField(
+                      label: "Contact Number",
+                      controller: _contactNumberController,
+                      keyboardType: TextInputType.phone,
+                      validator: (v) => v!.isEmpty ? "Required" : null,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
 

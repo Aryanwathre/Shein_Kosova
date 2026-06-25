@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shein_kosova/services/api_service.dart';
 import 'package:shein_kosova/services/notification_service.dart';
-import 'package:shein_kosova/widgets/bottomNavigationBar.dart';
 
 enum AuthState {
   initial,
@@ -14,10 +15,32 @@ enum AuthState {
 
 class AuthProvider extends ChangeNotifier {
   final ApiServiceManager _apiManager = ApiServiceManager();
+  StreamSubscription? _authSubscription;
 
   AuthState _state = AuthState.initial;
   String? _errorMessage;
   Map<String, dynamic>? _currentUser;
+
+  AuthProvider() {
+    _authSubscription = TokenManager.authEventStream.listen((isAuthenticated) {
+      if (!isAuthenticated) {
+        _handleGlobalLogout();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _handleGlobalLogout() {
+    _currentUser = null;
+    _setState(AuthState.unauthenticated);
+    _clearError();
+  }
+  
 
   // Getters
   AuthState get state => _state;

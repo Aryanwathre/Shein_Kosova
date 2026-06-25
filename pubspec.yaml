@@ -2,7 +2,7 @@ name: shein_kosova
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.5+1
+version: 1.0.5+41
 
 environment:
   sdk: ^3.8.1
@@ -22,7 +22,6 @@ dependencies:
   shared_preferences: ^2.5.3
   dropdown_button2: ^3.1.0
   confetti: ^0.8.0
-  country_code_picker: ^3.4.1
   csc_picker_plus: ^0.0.3
   input_quantity: ^2.5.1
   easy_stepper: ^1.1.0

@@ -27,12 +27,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
-    final provider = Provider.of<SearchProvider>(context, listen: false);
-_searchController.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      provider.clearSearchResults();
-    });
-
+    _searchController.dispose();
+    // Use the saved searchProvider reference instead of looking it up in context
+    searchProvider.clearSearchResults();
     super.dispose();
   }
 

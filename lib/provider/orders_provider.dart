@@ -130,6 +130,22 @@ class OrdersProvider with ChangeNotifier {
 
 
   /// --------------------------------------------------
+  ///  GET ORDER BY ID
+  /// --------------------------------------------------
+  Future<OrderModel?> fetchOrderById(String orderId) async {
+    try {
+      final response = await _ordersApi.getOrderById(orderId: orderId);
+      if (response.success && response.data != null) {
+        return response.data;
+      }
+    } catch (e) {
+      debugPrint('Error fetching order by ID: $e');
+    }
+    return null;
+  }
+
+
+  /// --------------------------------------------------
   ///  GET ORDER STATUS
   /// --------------------------------------------------
   Future<void> getOrderStatus(String orderId) async {
@@ -139,7 +155,8 @@ class OrdersProvider with ChangeNotifier {
       final response = await _ordersApi.getOrderById(orderId: orderId);
 
       if (response.success && response.data != null) {
-        _orderStatus = response.data!;
+        // Since we changed the API return type to OrderModel, we skip assigning to _orderStatus (Map)
+        // or we can add a toJson to OrderModel if needed.
         _clearError();
         _setState(CheckoutState.success);
       } else {

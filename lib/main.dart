@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -78,8 +80,33 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  StreamSubscription? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Global listener for auth events (e.g. session expired)
+    _authSubscription = TokenManager.authEventStream.listen((isAuthenticated) {
+      if (!isAuthenticated) {
+        // Force navigate to login on session expiry
+        AppRoutes.router.go(AppRoutes.login);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

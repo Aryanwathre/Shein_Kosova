@@ -11,23 +11,25 @@ import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 
-class CargorySearchScreen extends StatefulWidget {
-  const CargorySearchScreen({super.key});
+class CategorySearchScreen extends StatefulWidget {
+  const CategorySearchScreen({super.key});
 
   @override
-  State<CargorySearchScreen> createState() => _CargorySearchScreenState();
+  State<CategorySearchScreen> createState() => _CategorySearchScreenState();
 }
 
-class _CargorySearchScreenState extends State<CargorySearchScreen> {
+class _CategorySearchScreenState extends State<CategorySearchScreen> {
+  HomeProvider? _homeProvider;
 
   @override
   void initState() {
     super.initState();
+    _homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      if (homeProvider.categories.isEmpty) {
-        homeProvider.initHome();
+      final provider = _homeProvider;
+      if (provider != null && provider.categories.isEmpty) {
+        provider.initHome();
       }
     });
   }
