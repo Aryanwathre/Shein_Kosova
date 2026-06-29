@@ -50,9 +50,12 @@ Future<bool?> showLoginPrompt(BuildContext context) {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {
-                    context.pop(); // Close bottom sheet
-                    context.push('/login?isModal=true');
+                  onPressed: () async {
+                    context.pop();
+                    final result = await context.push('/login?isModal=true');
+                    if (context.mounted) {
+                      context.pop(result);
+                    }
                   },
                   child: const Text(
                     'Log In',

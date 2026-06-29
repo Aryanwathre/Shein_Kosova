@@ -108,6 +108,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sign Up'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/shop');
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

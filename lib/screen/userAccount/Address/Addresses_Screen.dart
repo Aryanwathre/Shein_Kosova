@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/models/AddressModel.dart';
 import 'package:shein_kosova/provider/address_provider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 class SavedAddressesPage extends StatefulWidget {
@@ -16,13 +18,29 @@ class _SavedAddressesPageState extends State<SavedAddressesPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.state != AuthState.authenticated) {
+        final loggedIn = await showLoginPrompt(context);
+        if (!mounted) return;
+        if (loggedIn != true && authProvider.state != AuthState.authenticated) {
+          context.pop(); // Bop back
+          return;
+        }
+      }
       Provider.of<AddressProvider>(context, listen: false).fetchAddresses();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    if (authProvider.state != AuthState.authenticated) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Saved Addresses")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Saved Addresses"),

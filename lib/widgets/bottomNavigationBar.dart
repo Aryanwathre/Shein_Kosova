@@ -130,7 +130,9 @@ class _LandingPageState extends State<LandingPage> {
     ];
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context.read<LandingProvider>().changePage(widget.selectedIndex);
-      context.read<CartProvider>().loadCart();
+      if (context.read<AuthProvider>().isAuthenticated) {
+        context.read<CartProvider>().loadCart();
+      }
     });
   }
 

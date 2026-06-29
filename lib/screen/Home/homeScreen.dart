@@ -38,11 +38,14 @@ class _HomescreenState extends State<Homescreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final wishlistProvider =
-          Provider.of<WishlistProvider>(context, listen: false);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       await homeProvider.initHome();
-      wishlistProvider.loadWishlist();
+      
+      if (authProvider.isAuthenticated) {
+        final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
+        wishlistProvider.loadWishlist();
+      }
 
       if (mounted && homeProvider.categories.isNotEmpty) {
         _tabController = TabController(

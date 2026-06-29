@@ -33,6 +33,12 @@ class CartProvider extends ChangeNotifier {
   // --- Core API Methods ---
 
   Future<void> loadCart({bool showLoading = true}) async {
+    if (!await _api.isUserLoggedIn()) {
+      _items = [];
+      _setState(CartState.loaded);
+      return;
+    }
+
     if (showLoading) _setState(CartState.loading);
 
     try {

@@ -161,6 +161,9 @@ class FirebaseMessagingService {
     // Register handler for background messages (app terminated)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+    // Subscribe to global topic for general announcements
+    await FirebaseMessaging.instance.subscribeToTopic("all-users");
+
     // Listen for messages when the app is in foreground
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 

@@ -4,13 +4,42 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/product_details_provider.dart';
 import 'package:shein_kosova/provider/wishlist_provider.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
-class WishlistScreen extends StatelessWidget {
+class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
 
   @override
+  State<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends State<WishlistScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.state != AuthState.authenticated) {
+        final loggedIn = await showLoginPrompt(context);
+        if (!mounted) return;
+        if (loggedIn != true && authProvider.state != AuthState.authenticated) {
+          context.pop(); // Bop back
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    if (authProvider.state != AuthState.authenticated) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Wishlist")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text("Wishlist")),
       body: FutureBuilder(

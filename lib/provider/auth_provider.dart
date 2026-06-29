@@ -135,7 +135,7 @@ class AuthProvider extends ChangeNotifier {
         NotificationService().refreshAndSaveToken();
 
         if (context.mounted) {
-           context.pop(true);
+           context.go('/shop?index=0');
         }
         return true;
       } else {

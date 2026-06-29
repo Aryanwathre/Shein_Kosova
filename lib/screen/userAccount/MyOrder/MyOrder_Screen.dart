@@ -5,6 +5,8 @@ import 'package:shein_kosova/models/order_model.dart';
 import 'package:shein_kosova/provider/orders_provider.dart';
 import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -22,9 +24,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   void initState() {
     super.initState();
     _ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.state != AuthState.authenticated) {
+        final loggedIn = await showLoginPrompt(context);
+        if (!mounted) return;
+        if (loggedIn != true && authProvider.state != AuthState.authenticated) {
+          context.pop(); // Bop back
+          return;
+        }
+      }
       _ordersProvider?.getAllOrders(refresh: true);
     });
+    
     _scrollController.addListener(_onScroll);
   }
 
@@ -49,6 +62,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    if (authProvider.state != AuthState.authenticated) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("My Orders")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final ordersProvider = context.watch<OrdersProvider>();
     final orders = ordersProvider.orders;
 

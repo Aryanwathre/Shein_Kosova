@@ -10,6 +10,10 @@ import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 
 
+import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
+
+
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
 
@@ -38,6 +42,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.state != AuthState.authenticated) {
+        final loggedIn = await showLoginPrompt(context);
+        if (!mounted) return;
+        if (loggedIn != true && authProvider.state != AuthState.authenticated) {
+          context.pop(); // Bop back
+          return;
+        }
+      }
+
       final addressProvider = context.read<AddressProvider>();
       final checkoutProvider = context.read<CheckoutProvider>();
       final configProvider = context.read<ConfigProvider>();

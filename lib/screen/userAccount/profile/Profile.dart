@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shein_kosova/provider/Profile_provider.dart';
 import 'package:shein_kosova/provider/auth_provider.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,7 +19,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     // Fetch profile data from the API as soon as the screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProfileProvider>(context, listen: false).loadUserProfile();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isAuthenticated) {
+        Provider.of<ProfileProvider>(context, listen: false).loadUserProfile();
+      }
     });
   }
 
@@ -53,9 +57,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     if (!authProvider.isAuthenticated) {
-      // Safety fallback (should rarely happen)
-      return const Scaffold(
-        body: Center(child: ShimmerWidget.rectangular(height: 200)),
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.account_circle_outlined, size: 100, color: Colors.grey),
+              const SizedBox(height: 24),
+              const Text(
+                'Please sign in to view your profile',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => showLoginPrompt(context),
+                child: const Text('Sign In / Register'),
+              ),
+            ],
+          ),
+        ),
       );
     }
     return Scaffold(

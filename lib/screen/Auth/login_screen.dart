@@ -55,7 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      context.pop(true);
+      // Force redirection to home page as requested
+      context.go('/shop?index=0');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login successful!')),
       );
@@ -72,12 +73,16 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
-        leading: widget.isModal
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => context.pop(false),
-              )
-            : null,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop(false);
+            } else {
+              context.go('/shop');
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

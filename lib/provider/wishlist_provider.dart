@@ -28,6 +28,12 @@ class WishlistProvider extends ChangeNotifier {
 
   /// Load the user's wishlist from the API
   Future<void> loadWishlist() async {
+    if (!await _api.isUserLoggedIn()) {
+      _wishlistItems = [];
+      _setState(WishlistState.loaded);
+      return;
+    }
+
     _setState(WishlistState.loading);
     _clearError();
 

@@ -9,6 +9,7 @@ import 'package:shein_kosova/utils/AppColors.dart';
 import 'package:shein_kosova/utils/formatedPrice.dart';
 import 'package:shein_kosova/utils/responsive_helper.dart';
 import 'package:shein_kosova/widgets/shimmer_widget.dart';
+import 'package:shein_kosova/widgets/login_prompt_sheet.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -70,6 +71,32 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildErrorState(BuildContext context) {
+    final errorMessage = context.read<CartProvider>().errorMessage ?? "";
+    final isUnauthenticated = errorMessage.toLowerCase().contains('unauthenticated') || 
+                              errorMessage.toLowerCase().contains('login') ||
+                              errorMessage.toLowerCase().contains('401');
+
+    if (isUnauthenticated) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.shopping_cart_outlined, size: 100, color: Colors.grey),
+            const SizedBox(height: 24),
+            const Text(
+              'Please sign in to view your cart',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => showLoginPrompt(context),
+              child: const Text('Sign In'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

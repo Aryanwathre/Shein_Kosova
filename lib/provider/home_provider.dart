@@ -154,6 +154,8 @@ class HomeProvider extends ChangeNotifier {
   }
 
   Future<void> _fetchForYou({bool forceRefresh = false}) async {
+    if (!await _api.isUserLoggedIn()) return;
+
     if (!forceRefresh && _taggedProductsMap.containsKey("For You") && !(_tagLoadingMap["For You"] ?? false)) return;
     
     _tagLoadingMap["For You"] = true;

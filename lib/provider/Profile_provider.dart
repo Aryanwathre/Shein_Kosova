@@ -21,6 +21,11 @@ class ProfileProvider extends ChangeNotifier {
 
   /// Fetch the user's profile from the API
   Future<void> loadUserProfile() async {
+    if (!await _api.isUserLoggedIn()) {
+      _userProfile = null;
+      _setState(ProfileState.initial);
+      return;
+    }
     _setState(ProfileState.loading);
 
     try {
