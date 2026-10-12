@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/">
+
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Shop the latest fashion and lifestyle products at Zebra. Exclusive collections, fast shipping, premium quality.">
+    <meta name="keywords" content="fashion, shopping, Zebra, online store, lifestyle">
+    <meta name="author" content="Zebra">
+    <meta name="theme-color" content="#FF1744">
+
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="Zebra - Premium Fashion & Lifestyle">
+    <meta property="og:description" content="Shop exclusive fashion collections with fast delivery">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://zebra-ks.shop">
+    <meta property="og:image" content="assets/logo.png">
+    <meta property="og:site_name" content="Zebra">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Zebra - Premium Fashion & Lifestyle">
+    <meta name="twitter:description" content="Shop exclusive fashion collections with fast delivery">
+    <meta name="twitter:image" content="assets/logo.png">
+
+    <!-- iOS meta tags & icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Zebra">
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="apple-touch-startup-image" href="icons/Icon-512.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png"/>
+    <link rel="shortcut icon" href="favicon.png" type="image/png">
+
+    <!-- Android Chrome Web App Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Zebra">
+
+    <!-- Canonical URL for SEO -->
+    <link rel="canonical" href="https://zebra-ks.shop/">
+
+    <!-- Preconnect to external resources for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.zebra-ks.shop">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
+    <title>Zebra - Premium Fashion & Lifestyle Shopping</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID', { 'anonymize_ip': true });
+    </script>
+
+    <!-- Loading styles for better perceived performance -->
+    <style>
+        html {
+          height: 100%;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #ffffff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          /* Use dynamic viewport height so the bottom bar (tabs / Add to Cart)
+             stays inside the visible area on mobile browsers, where 100vh
+             wrongly includes the address/nav bar and pushes it off-screen. */
+          height: 100vh;
+          height: 100dvh;
+          width: 100vw;
+          overflow: hidden;
+        }
+        /* Ensure Flutter's own view element also tracks the dynamic viewport. */
+        flutter-view, flt-glass-pane {
+          height: 100dvh !important;
+        }
+        #app {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 20px;
+          box-sizing: border-box;
+        }
+        .logo {
+          /* Responsive sizing: 30% of viewport width, capped between 100px and 200px */
+          width: 30vw;
+          height: 30vw;
+          min-width: 100px;
+          max-width: 200px;
+          min-height: 100px;
+          max-height: 200px;
+          margin-bottom: 30px;
+          animation: pulse 2s infinite ease-in-out;
+          object-fit: contain;
+        }
+        .loader-bar {
+          /* Responsive width: 50% of viewport width, capped between 150px and 300px */
+          width: 50vw;
+          min-width: 150px;
+          max-width: 300px;
+          height: 4px;
+          background-color: #f3f3f3;
+          border-radius: 2px;
+          overflow: hidden;
+          position: relative;
+        }
+        .loader-progress {
+          width: 50%;
+          height: 100%;
+          background-color: #000000;
+          position: absolute;
+          animation: loading 1.5s infinite ease-in-out;
+          border-radius: 2px;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.05); opacity: 1; }
+          100% { transform: scale(1); opacity: 0.8; }
+        }
+        @keyframes loading {
+          0% { left: -50%; }
+          100% { left: 100%; }
+        }
+    </style>
+</head>
+<body>
+<!-- Loading indicator while Flutter initializes -->
+<div id="app">
+    <div class="loading-container">
+        <img class="logo" src="icons/Icon-192.png" alt="Zebra Logo">
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
+</div>
+
+<script src="flutter_bootstrap.js" async></script>
+
+<!-- Fallback message for no-JS environments -->
+<noscript>
+    <p style="text-align: center; padding-top: 50px; font-family: Arial, sans-serif;">
+        This application requires JavaScript to be enabled. Please enable JavaScript in your browser settings.
+    </p>
+</noscript>
+
+<!-- Service Worker Registration for PWA -->
+<script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/flutter_service_worker.js');
+      });
+    }
+</script>
+</body>
+</html>

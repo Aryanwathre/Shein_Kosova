@@ -1,0 +1,58 @@
+# Codemagic CI/CD — builds the iOS app on a cloud Mac and uploads to TestFlight.
+# Lets you ship from Windows (no Mac needed). Docs: https://docs.codemagic.io/yaml-quick-start/
+#
+# ONE-TIME SETUP in the Codemagic UI before the first run:
+#   1. Connect this Git repo.
+#   2. Teams (or App) settings → Integrations → App Store Connect:
+#      upload the .p8 API key + Issuer ID + Key ID, and name the integration
+#      exactly "Zebra App Store Connect" (or change the name in the integrations block below).
+#   3. Add an Environment variable group named "appstore" with:
+#        APP_STORE_APPLE_ID  = the numeric Apple ID of the app from App Store Connect
+#                              (App Store Connect → App → App Information → "Apple ID").
+#      Mark the group as secure.
+#   4. Bundle ID must already exist as an app in App Store Connect: com.shein-ks.sheinKosova
+
+workflows:
+  ios-testflight:
+    name: Zebra iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Zebra App Store Connect   # must match the integration name in step 2
+    environment:
+      groups:
+        - appstore
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.shein-ks.sheinKosova
+    scripts:
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Flutter build IPA
+        script: |
+          # Version comes from pubspec.yaml ("version: 1.0.7+45" -> 1.0.7 / build 45).
+          # Build number must be higher than the last TestFlight upload.
+          BUILD_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')
+          BUILD_NUMBER=$(grep '^version:' pubspec.yaml | sed 's/.*+//' | tr -d '\r')
+          echo "Building iOS $BUILD_NAME ($BUILD_NUMBER)"
+          flutter build ipa --release \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true   # auto-releases the build to internal testers
+        # beta_groups:               # uncomment to also push to an external group
+        #   - Zebra Testers

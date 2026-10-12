@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shein_kosova/provider/product_details_provider.dart';
+import 'package:shein_kosova/screen/ProductDetails/productDetails.dart';
+import 'package:shein_kosova/widgets/ProductCard.dart';
+import 'package:shein_kosova/widgets/shimmer_widget.dart';
+import 'package:shein_kosova/utils/responsive_helper.dart';
+
+
+class ProductGridScreen extends StatefulWidget {
+  int selectedCategoryId;
+  bool? scrollingPhyscis = false;
+  ProductGridScreen({super.key, required this.selectedCategoryId, this.scrollingPhyscis});
+
+  @override
+  State<ProductGridScreen> createState() => _ProductGridScreenState();
+}
+
+class _ProductGridScreenState extends State<ProductGridScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch products from the API when the screen is first loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      if(widget.selectedCategoryId == 0){
+        productProvider.fetchAllProducts();
+      } else {
+        productProvider.getProductByCode(widget.selectedCategoryId, 0,);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Consumer<ProductProvider>(
+        builder: (context, provider, _) {
+          // Handle the different states of the product list
+          switch (provider.listState) {
+            case ProductListState.loading:
+              return GridView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: 6,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: ResponsiveHelper.getGridColumns(context),
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.55,
+                ),
+                itemBuilder: (context, index) => const ProductCardShimmer(),
+              );
+            case ProductListState.error:
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load products',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.listErrorMessage ?? "Something went wrong",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        if (widget.selectedCategoryId == 0) {
+                          provider.fetchAllProducts();
+                        } else {
+                          provider.getProductByCode(widget.selectedCategoryId, 0);
+                        }
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            case ProductListState.loaded:
+              if (provider.products.isEmpty) {
+                return const Center(child: Text("No products found."));
+              }
+              // If loaded, display the product grid
+              return GridView.builder(
+                physics: widget.scrollingPhyscis == true ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(8),
+                itemCount: provider.products.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: ResponsiveHelper.getGridColumns(context),
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.55, // Adjusted from 0.58 to prevent overflow
+                ),
+                itemBuilder: (context, index) {
+                  final product = provider.products[index];
+                  return ProductCard(
+                      onTap: () {
+                        // Navigate to details screen, passing the productId
+                        context.push('/products/${product.id}', extra: product);
+                      },
+                      product: product, context: context);
+                },
+              );
+            default:
+              return const Center(child: Text("Welcome to the store!"));
+          }
+        },
+      ),
+      bottomNavigationBar: _buildBottomBar(context),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    // Use a Consumer here as well to get the latest state for the buttons
+    return Consumer<ProductProvider>(
+      builder: (context, provider, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Sort By Button
+              TextButton.icon(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          title: const Text("Relevance"),
+                          onTap: () {
+                            provider.sortProducts("Relevance");
+                            context.pop();
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Price: Low to High"),
+                          onTap: () {
+                            provider.sortProducts("Price: Low to High");
+                            context.pop();
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Price: High to Low"),
+                          onTap: () {
+                            provider.sortProducts("Price: High to Low");
+                            context.pop();
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.sort, color: Colors.black87),
+                label: const Text("Sort By", style: TextStyle(color: Colors.black87)),
+              ),
+
+              // Filter Button
+              TextButton.icon(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          title: const Text("All"),
+                          onTap: () {
+                            provider.filterByCategory("All");
+                            context.pop();
+                          },
+                        ),
+                        // Assuming you have category IDs to filter by
+                        ListTile(
+                          title: const Text("Men"),
+                          onTap: () {
+                            provider.filterByCategory("mens-category-id");
+                            context.pop();
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Women"),
+                          onTap: () {
+                            provider.filterByCategory("womens-category-id");
+                            context.pop();
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Accessories"),
+                          onTap: () {
+                            provider.filterByCategory("accessories-category-id");
+                            context.pop();
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.filter_alt, color: Colors.black87),
+                label: const Text("Filter", style: TextStyle(color: Colors.black87)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
